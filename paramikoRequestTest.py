@@ -65,7 +65,7 @@ while True:
 
     output_lst = output.splitlines(0)
     
-    # print(output_lst[5]) # output의 split lines 6번째가 stats 값이다.
+    print(output_lst[5]) # output의 split lines 6번째가 stats 값이다.
 
     # print(output_lst)
     # print(len(output_lst))

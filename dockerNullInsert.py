@@ -11,24 +11,6 @@ from datetime import datetime
 cli = paramiko.SSHClient()
 cli.set_missing_host_key_policy(paramiko.AutoAddPolicy)
 
-# ## 222 서버
-# server = "172.16.28.222"
-# user = "e8ight"
-# cli.connect(server, username=user, password="ndxpro123!!")
- 
-# # 새로운 interactive shell session 생성
-# channel = cli.invoke_shell()
-
-# # 명령 송신
-# channel.send("su\n")
-# channel.send("ndxpro123!!")
-
-# channel.send("curl --unix-socket /var/run/docker.sock http://localhost/v1.43/containers/logstash/stats?stream=true\n")
-# time.sleep(1.0)
-# # 결과 수신
-# output = channel.recv(65535).decode("UTF-8").replace(";",'"')
-
-
 # 220 서버
 server = "172.16.28.220"
 user = "root"
@@ -43,12 +25,13 @@ lines = stdout.readlines()
 # 새로운 interactive shell session 생성
 channel = cli.invoke_shell()
  
-count = 0
+count = 0 
 while True:
     channel.send("curl --unix-socket /var/run/docker.sock http://localhost/v1.41/containers/data-manager/stats?stream=true\n")
     time.sleep(0.9)
     # 결과 수신
     output = channel.recv(65535).decode("UTF-8").replace(";",'"')
+
     output_lst = output.splitlines(0)
     # print(output_lst[5]) # output의 split lines 6번째가 stats 값이다.
 

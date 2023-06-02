@@ -1,0 +1,185 @@
+import requests
+import os
+import paramiko
+import getpass
+import time
+import json
+from json import dumps, loads
+from datetime import datetime
+import psycopg2
+import psycopg2.extras
+
+def connect_db(host, dbname, user, password, port):
+    return psycopg2.connect(host = host,dbname = dbname,user = user,password = password,port = port)
+    
+def select(conn, dbname):
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cur.execute(f"select * from {dbname}".format(dbname))
+    rows = cur.fetchall()
+    
+    return rows
+
+def docker_dict(header, row):
+    result_dict = dict(zip(header,row))
+    return result_dict
+
+def insert(conn,schema,tablename,container,cpu,mem,datetime):
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    # cur.execute(f"insert into {schema}.{tablename}(container_name,cpu,mem,datetime) values ({container},{cpu},{mem},{datetime})"
+    #             .format(schema,tablename,container,cpu,mem,datetime))
+    insert_query = """ INSERT INTO schema.tablename (container_name, cpu, mem, datetime) VALUES (%s,%s,%s,%s,%s,%s)"""
+    record_to_insert = (container,cpu,mem,datetime)
+
+    cur.execute(insert_query, record_to_insert)
+
+
+
+
+cli = paramiko.SSHClient()
+cli.set_missing_host_key_policy(paramiko.AutoAddPolicy)
+
+# 220 서버
+server = "172.16.28.220"
+user = "root"
+# pwd = getpass.getpass("Password: ")
+cli.connect(server, username=user, password="!!ndxpro123!!220")
+
+
+stdin, stdout, stderr = cli.exec_command("ls -la")
+lines = stdout.readlines()
+
+ 
+# 새로운 interactive shell session 생성
+channel = cli.invoke_shell()
+ 
+count = 0 
+container_name = "data_auth"
+while True:
+    channel.send("curl --unix-socket /var/run/docker.sock http://localhost/v1.41/containers/{container_name}/stats?stream=true\n")
+    time.sleep(0.9)
+    # 결과 수신
+    output = channel.recv(65535).decode("UTF-8").replace(";",'"')
+
+    output_lst = output.splitlines(0)
+  
+    resource = json.loads(output_lst[len(output_lst)-1].replace("'", "\""))
+
+    # print(resource)
+    # print(type(resource))
+    # print(string_to_dict['cpu_stats']['cpu_usage']['total_usage'])
+    
+    # memory usage percentage
+    used_memory =  resource['memory_stats']['usage'] - resource['memory_stats']['stats']['cache']
+    available_memory = resource['memory_stats']['limit']
+    memory_usage = (used_memory/available_memory) * 100.0
+    
+    # cpu usage percentage
+    cpu_delta = resource['cpu_stats']['cpu_usage']['total_usage'] - resource['precpu_stats']['cpu_usage']['total_usage']
+    num_cpus = resource['cpu_stats']['online_cpus']
+    if len(resource['precpu_stats']) < 4:
+        system_cpu_delta = resource['cpu_stats']['system_cpu_usage'] - 0
+    else: 
+        system_cpu_delta = resource['cpu_stats']['system_cpu_usage'] - resource['precpu_stats']['system_cpu_usage']
+
+    cpu_usage = (cpu_delta/system_cpu_delta) * num_cpus *100.0
+
+    print("memory :", memory_usage, datetime.now())
+    print("cpu usage :", cpu_usage)
+    
+    
+    docker_dict ={}
+    
+    # cpu usage in percentages
+    # print((string_to_dict['cpu_stats']['cpu_usage']['total_usage'] / string_to_dict['cpu_stats']['system_cpu_usage']) * 100) 
+    count += 1
+
+import psycopg2
+import psycopg2.extras
+import pandas as pd
+
+
+# conn = psycopg2.connect(host="localhost",dbname='postgres',user='postgres',password='123123',port=5432)
+# cursor = conn.cursor()
+# row = []
+
+
+
+def connect_db(host, dbname, user, password, port):
+    return psycopg2.connect(host = host,dbname = dbname,user = user,password = password,port = port)
+    
+def select(conn, dbname):
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cur.execute(f"select * from {dbname}".format(dbname))
+    rows = cur.fetchall()
+    
+    return rows
+
+def dict_maker(header, row):
+    result_dict = dict(zip(header,row))
+    return result_dict
+
+    # gatway_conn = connect_db(host="localhost",dbname='gateway',user='postgres',password='123123',port=5432)
+    
+    # cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    # cur2 = conn2.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    
+    # cur.execute("select * from postgres")
+    # cur2.execute("select * from gateway")
+    
+    # rows = cur.fetchall()
+
+try:
+
+    postgres_data = []
+    gateway_data = []
+    postgress_conn = connect_db("localhost",'postgres','postgres','123123',5432)
+    gateway_conn = connect_db("localhost",'postgres','postgres','123123',5432)
+    
+    postgres_rows = select(postgress_conn,"postgres")
+    
+    gateway_rows = select(gateway_conn,"gateway")
+    
+    postgres_header = ['serviceID','containerID','CPU','Mem','datetime']
+    gateway_header = ['service_id','api_id','request_time','response_time']
+    
+    for row in postgres_rows:
+        postgres_data.append(dict_maker(postgres_header,row))
+    
+    for row in gateway_rows:
+        gateway_data.append(dict_maker(gateway_header,row))
+    
+    final_data = pd.DataFrame(postgres_data)
+    
+    for i in range(len(gateway_data)):
+        for k, v in gateway_data[i].items():
+            if k == 'service_id':
+                pass
+
+            else:
+                final_data[k] = v
+                
+        for index, row in final_data.iterrows():
+        # if final_data[i]['api_id'] == final_data[i]['container_id']:
+        #     print(final_data[i])
+        
+            if row['containerID'] == row['api_id']:
+                print(row)
+    
+    # gateway_data.append(dict_maker(header,gateway_rows))
+    # lst = [i[0].split(',') for i in header]
+    # df = []
+    # resource_dict = {}
+    
+    # for row in rows:
+    #     result_dict = dict(zip(header,row))
+    #     df.append(result_dict)
+        
+        # df.append(dict)
+    # print([dict(zip(lst[0], v)) for v in lst[1:]])
+    
+    # print(postgres_data)
+    # print(gateway_data)
+except psycopg2.DatabaseError as db_err:
+    print(db_err)
+    
+channel.close()

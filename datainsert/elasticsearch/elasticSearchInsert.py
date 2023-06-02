@@ -5,6 +5,9 @@ import re
 import psycopg2
 import psycopg2.extras
 import pandas as pd
+from sqlalchemy import create_engine
+import time
+
 
 def connect_db(host, dbname, user, password, port):
     return psycopg2.connect(host = host,dbname = dbname,user = user,password = password,port = port)
@@ -71,11 +74,14 @@ for i in range(len(res['hits']['hits'])):
     # response time
     res_timestamp = res['hits']['hits'][i]["_source"]["timestamp_millis"]
     res_datetime = datetime.fromtimestamp(res_timestamp/1000)
+    res_datetime = res_datetime.strftime("%Y-%m-%d %H:%M:%S.%f")
+    
     
     #servicename
     res_service_name = res['hits']['hits'][i]["_source"]["localEndpoint"]["serviceName"]
-    res_service_name = re.sub("data","data-",res_service_name)
-    res_service_name = re.sub("-service","",res_service_name)
+    # if res_service_name.find("manager"):
+        # res_service_name = re.sub("data","data",res_service_name)
+    res_service_name = re.sub("-service","service",res_service_name)
     # print(res_service_name)
     
     
@@ -92,6 +98,58 @@ for i in range(len(res['hits']['hits'])):
     # elasticsearch data ingesting
     elastic_dict = elasticsearch_dict(res_service_name,api_name, res_datetime, duration_time/1000.0)   
     elastic_lst.append(elastic_dict)
-    
+
+
+
 elastic_df = pd.DataFrame(elastic_lst)
-print(elastic_df['response_time'].sort_values())
+print(elastic_df)
+
+conn = psycopg2.connect(
+        host="localhost",
+        port="5432",
+        database="postgres",
+        user="postgres",
+        password="123123"
+    )
+
+cur = conn.cursor()
+
+
+count = 1
+start = time.time()
+for index, row in elastic_df.iterrows(): 
+    
+    # table_name = row['service_name']
+    # print(table_name)
+    # print(row)
+    
+    
+    
+    schema_name = 'datainferenceelastic'
+    table_name = row['service_name']
+    full_table_name = f'{schema_name}.{table_name}'
+
+    # Connect to the PostgreSQL database
+    
+    print(elastic_df)
+    print(type(row))
+    # Create a SQLAlchemy engine
+    # engine = create_engine('postgresql+psycopg2://postgres:123123@localhost:5432/postgres')
+
+    cur.execute(f"INSERT INTO {full_table_name} (service_name,api_name,response_time,duration) VALUES ({row['service_name']},{row['api_name']},{row['response_time']},{row['duration']})")
+    conn.commit()
+    # row.to_sql(full_table_name,engine, if_exists='append', index = False)
+    # print(row['service_name'], count)
+    # count += 1
+
+
+print("time cost: ",time.time()-start)
+cur.close()
+conn.close()
+    
+# postgres_data = []
+# postgres_conn = connect_db("localhost",'postgres','postgres','123123',5432)
+
+# postgres_rows = insert(postgres_conn,"datainferencedocker",res_service_name,res_service_name,res_datetime,duration_time/1000.0)
+
+

@@ -5,9 +5,23 @@ import getpass
 import time
 import json
 from json import dumps, loads
-from datetime import datetime
+from datetime import datetime, timedelta
 import psycopg2
 import psycopg2.extras
+import logging
+
+
+
+def round_seconds(dt):
+    seconds = (dt - dt.min).seconds
+    rounding = (seconds + 5) // 10 * 10
+    rounded_dt = dt + timedelta(0, rounding - seconds)
+    return rounded_dt
+
+def round_seconds2(obj: datetime) -> datetime:
+    if obj.microsecond >= 500_000:
+        obj += timedelta(seconds=1)
+    return obj.replace(microsecond=0)
 
 def connect_db(host, dbname, user, password, port):
     return psycopg2.connect(host = host,dbname = dbname,user = user,password = password,port = port)
@@ -27,10 +41,44 @@ def insert(conn,schema,tablename,container,cpu,mem,datetime):
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     # cur.execute(f"insert into {schema}.{tablename}(container_name,cpu,mem,datetime) values ({container},{cpu},{mem},{datetime})"
     #             .format(schema,tablename,container,cpu,mem,datetime))
-    insert_query = """ INSERT INTO schema.tablename (container_name, cpu, mem, datetime) VALUES (%s,%s,%s,%s,%s,%s)"""
+    insert_query = """ INSERT INTO schema.tablename (container_name, cpu, mem, datetime) VALUES (%s,%s,%s,%s,%s)"""
     record_to_insert = (container,cpu,mem,datetime)
 
     cur.execute(insert_query, record_to_insert)
+
+
+
+
+# os environment
+# container_name = os.environ['CONTAINER_NAME']
+# docker_log = os.environ['DOCKER_LOG']
+container_name = "data-broker-3"
+# container_name = "data-broker-2"
+
+
+
+# logging 
+
+logging.basicConfig(
+            format='%(asctime)s %(levelname)s %(message)s', 
+            level=logging.INFO, 
+            datefmt='%m/%d/%Y %I:%M:%S %p'
+            )
+logger = logging.getLogger('ndxpro-datainference-docker-datainsert')
+
+
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
+# f1 = logging.FileHandler(filename = docker_log)
+# f1.setLevel(logging.INFO)
+# f1.setFormatter(formatter)
+# logger.addHandler(f1)
+
+
 
 
 
@@ -52,18 +100,64 @@ lines = stdout.readlines()
 # 새로운 interactive shell session 생성
 channel = cli.invoke_shell()
  
-count = 0 
-container_name = "data_auth"
+# container_name = "dat"
+
+logger.setLevel(level=logging.INFO)
+# scheme = "datainferencedocker"
+# container_name = "data-broker-1"
+
+
+table = container_name.replace("data-", "data")
+table = table.replace(table[4:],"brokerservice")
+# print(table)
+
+# table = table.replace(container_name[3:],"broker")
+# print(table)
+
+
+
+
+
+
 while True:
-    channel.send("curl --unix-socket /var/run/docker.sock http://localhost/v1.41/containers/{container_name}/stats?stream=true\n")
+    try:
+
+    # postgres_data = []
+        postgres_conn = connect_db("localhost",'postgres','postgres','123123',5432)
+        
+        # postgres_rows = select(postgress_conn,"postgres")
+        
+        
+        postgres_header = ['containerID','CPU','Mem','datetime']
+        cur = postgres_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        # gateway_header = ['service_id','api_id','request_time','response_time']
+        logger.info(f"{container_name}: DB connected successfully,  Time: {datetime.now()}")
+                    
+    except psycopg2.DatabaseError as db_err:
+        print(db_err)
+
+    logger.info(f"{container_name}: docker status ingest starting,  Time: {datetime.now()}")
+
+    send_message = f"curl --unix-socket /var/run/docker.sock http://localhost/v1.41/containers/{container_name}/stats?stream=true\n"
+    # print(send_message)
+    channel.send(send_message)
     time.sleep(0.9)
     # 결과 수신
     output = channel.recv(65535).decode("UTF-8").replace(";",'"')
 
     output_lst = output.splitlines(0)
-  
-    resource = json.loads(output_lst[len(output_lst)-1].replace("'", "\""))
+    # now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # new_now = f'{now}'
+    now = datetime.now()
+    rounded_now = str(round_seconds2(now).strftime("%Y-%m-%dT%H:%M:%S"))
+    try:
+        resource = json.loads(output_lst[len(output_lst)-1].replace("'", "\""),strict=False)
 
+            # Process the JSON data
+    except FileNotFoundError:
+        print("File not found.")
+    except json.JSONDecodeError as e:
+        print("JSON decoding error:", str(e))
     # print(resource)
     # print(type(resource))
     # print(string_to_dict['cpu_stats']['cpu_usage']['total_usage'])
@@ -82,16 +176,42 @@ while True:
         system_cpu_delta = resource['cpu_stats']['system_cpu_usage'] - resource['precpu_stats']['system_cpu_usage']
 
     cpu_usage = (cpu_delta/system_cpu_delta) * num_cpus *100.0
+    
 
-    print("memory :", memory_usage, datetime.now())
-    print("cpu usage :", cpu_usage)
+    docker_dict ={"container_name":container_name,
+                  "cpu": cpu_usage,
+                  "mem": memory_usage,
+                  "datetime": now}
     
     
-    docker_dict ={}
+    # insert_query = """ INSERT INTO %s.%s (container_name, cpu, mem, datetime) VALUES (%s,%s,%s,%s)"""
+    # insert_q2 = f'INSERT INTO {scheme}.{table} (container_name, cpu, mem, datetime) VALUES ({container_name},{cpu_usage},{memory_usage},{new_now} )'
     
+    # # record_to_insert = (scheme,table,container_name,cpu_usage,memory_usage,now)
+
+    # cur.execute(insert_q2)
+    # cur.execute(f"insert into {schema}.{tablename}(container_name,cpu,mem,datetime) values ({container},{cpu},{mem},{datetime})"
+    #             .format(schema,tablename,container,cpu,mem,datetime))
+    insert_query = """ INSERT INTO datainferencedocker.databrokerservice (container_name, cpu, memory, datetime) VALUES (%s,%s,%s,%s)"""
+    record_to_insert = (container_name,cpu_usage,memory_usage,rounded_now)
+    cur.execute(insert_query, record_to_insert)
+    postgres_conn.commit()
+    
+    logger.info(f"{container_name} Time: {now} CPU: {cpu_usage} Memory: {memory_usage}")
+    postgres_conn.close()
     # cpu usage in percentages
     # print((string_to_dict['cpu_stats']['cpu_usage']['total_usage'] / string_to_dict['cpu_stats']['system_cpu_usage']) * 100) 
-    count += 1
+
+
+
+
+
+
+
+
+
+
+
 
 import psycopg2
 import psycopg2.extras

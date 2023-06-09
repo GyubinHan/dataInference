@@ -135,9 +135,9 @@ for index, row in elastic_df.iterrows():
     print(type(row))
     # Create a SQLAlchemy engine
     # engine = create_engine('postgresql+psycopg2://postgres:123123@localhost:5432/postgres')
-
-    cur.execute(f"INSERT INTO {full_table_name} (service_name,api_name,response_time,duration) VALUES ({row['service_name']},{row['api_name']},{row['response_time']},{row['duration']})")
-    conn.commit()
+    
+    # cur.execute(f"INSERT INTO {full_table_name} (service_name,api_name,response_time,duration) VALUES ({row['service_name']},{row['api_name']},{row['response_time']},{row['duration']})")
+    # conn.commit()
     # row.to_sql(full_table_name,engine, if_exists='append', index = False)
     # print(row['service_name'], count)
     # count += 1

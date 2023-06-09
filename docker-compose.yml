@@ -1,0 +1,165 @@
+version: '0'  
+
+
+
+     
+services:
+
+  databroker-1:
+    image: dockerinsert
+    container_name: data-broker-1
+    restart: always
+    environment:
+      CONTAINER_NAME: data-broker-1
+      DOCKER_URL: 172.16.28.220:54011
+      DOCKER_LOG: /app/logFile/docker-databroker.log
+    volumes:
+      - ./docker-volume/:/app/logFile/
+    # cpus: 0.2
+
+  databroker-2:
+    image: dockerinsert
+    container_name: data-broker-2
+    restart: always
+    environment:
+      CONTAINER_NAME: data-broker-2
+      DOCKER_URL: 172.16.28.220:54012
+
+      DOCKER_LOG: /app/logFile/docker-databroker.log
+    volumes:
+      - ./docker-volume/:/app/logFile/
+  
+  databroker-3:
+    image: dockerinsert
+    container_name: data-broker-3
+    restart: always
+    environment:
+      CONTAINER_NAME: data-broker-3
+      DOCKER_URL: 172.16.28.220:54013
+
+      DOCKER_LOG: /app/logFile/docker-databroker.log
+    volumes:
+      - ./docker-volume/:/app/logFile/
+
+  databroker-4:
+    image: dockerinsert
+    container_name: data-broker-4
+    restart: always
+    environment:
+      CONTAINER_NAME: data-broker-4
+      DOCKER_URL: 172.16.28.220:54014
+
+      DOCKER_LOG: /app/logFile/docker-databroker.log
+    volumes:
+      - ./docker-volume/:/app/logFile/
+  
+    
+  databroker-5:
+    image: dockerinsert
+    container_name: data-broker-5
+    restart: always
+    environment:
+      CONTAINER_NAME: data-broker-5
+      DOCKER_URL: 172.16.28.220:54015
+
+      DOCKER_LOG: /app/logFile/docker-databroker.log
+    volumes:
+      - ./docker-volume/:/app/logFile/
+
+
+
+
+# datainferencedockerinsert
+
+
+
+
+  # datamanager:
+  #   image: datainferencedockerinsert
+  #   container_name: datamanager
+  #   restart: always
+  #   environment:
+  #     CONTAINER_NAME: data-manager
+  #     DOCKER_URL: 172.16.28.220:54011,172.16.28.220:54012,172.16.28.220:54013,172.16.28.220:54014,172.16.28.220:54015
+  #     DOCKER_LOG: /app/logFile/docker-datamanager.log
+  #   volumes:
+  #     -  ./docker-volume/:/app/logFile/
+  #   cpus: 0.3
+
+  # databroker-1:
+  #   image: datainferencedockerinsert
+  #   container_name: data-broker-1
+  #   restart: always
+  #   environment:
+  #     CONTAINER_NAME: data-broker
+  #     DOCKER_URL: 172.16.28.220:54011
+
+  #     DOCKER_LOG: /app/logFile/docker-databroker.log
+  #   volumes:
+  #     - ./docker-volume/:/app/logFile/
+  #   cpus: 0.2
+
+  # databroker-2:
+  #   image: datainferencedockerinsert
+  #   container_name: data-broker-2
+  #   restart: always
+  #   environment:
+  #     CONTAINER_NAME: data-broker
+  #     DOCKER_URL: 172.16.28.220:54012
+
+  #     DOCKER_LOG: /app/logFile/docker-databroker.log
+  #   volumes:
+  #     - ./docker-volume/:/app/logFile/
+  #   cpus: 0.2
+  
+  # databroker-3:
+  #   image: datainferencedockerinsert
+  #   container_name: data-broker-3
+  #   restart: always
+  #   environment:
+  #     CONTAINER_NAME: data-broker
+  #     DOCKER_URL: 172.16.28.220:54013
+
+  #     DOCKER_LOG: /app/logFile/docker-databroker.log
+  #   volumes:
+  #     - ./docker-volume/:/app/logFile/
+  #   cpus: 0.2
+
+  # databroker-4:
+  #   image: datainferencedockerinsert
+  #   container_name: data-broker-4
+  #   restart: always
+  #   environment:
+  #     CONTAINER_NAME: data-broker
+  #     DOCKER_URL: 172.16.28.220:54014
+
+  #     DOCKER_LOG: /app/logFile/docker-databroker.log
+  #   volumes:
+  #     - ./docker-volume/:/app/logFile/
+  #   cpus: 0.2
+
+  # databroker-5:
+  #   image: datainferencedockerinsert
+  #   container_name: data-broker-5
+  #   restart: always
+  #   environment:
+  #     CONTAINER_NAME: data-broker
+  #     DOCKER_URL: 172.16.28.220:54015
+
+  #     DOCKER_LOG: /app/logFile/docker-databroker.log
+  #   volumes:
+  #     - ./docker-volume/:/app/logFile/
+  #   cpus: 0.2
+
+  # agent:
+  #   image: datainferencedockerinsert
+  #   container_name: data-auth
+  #   restart: always
+  #   environment:
+  #     CONTAINER_NAME: agent
+  #       DOCKER_URL: 172.16.28.220:54011,172.16.28.220:54012,172.16.28.220:54013,172.16.28.220:54014,172.16.28.220:54015
+
+  #     DOCKER_LOG: /app/logFile/docker-agent.log
+  #   volumes:
+  #     - ./docker-volume/:/app/logFile/
+  #   cpus: 0.3

@@ -6,6 +6,8 @@ import time
 import json
 from json import dumps, loads
 from datetime import datetime
+import os
+import logging
 
 
 cli = paramiko.SSHClient()
@@ -28,6 +30,35 @@ cli.set_missing_host_key_policy(paramiko.AutoAddPolicy)
 # # 결과 수신
 # output = channel.recv(65535).decode("UTF-8").replace(";",'"')
 
+# os environment
+container_name = os.environ['CONTAINER_NAME']
+docker_log = os.environ['DOCKER_LOG']
+# logging 
+
+logging.basicConfig(
+            format='%(asctime)s %(levelname)s %(message)s', 
+            level=logging.INFO, 
+            datefmt='%m/%d/%Y %I:%M:%S %p'
+            )
+logger = logging.getLogger('ndxpro-pintel-kalman')
+
+
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
+f1 = logging.FileHandler(filename = docker_log)
+f1.setLevel(logging.INFO)
+f1.setFormatter(formatter)
+logger.addHandler(f1)
+
+
+logger.setLevel(level=logging.INFO)
+
+
+
 
 # 220 서버
 server = "172.16.28.220"
@@ -44,8 +75,10 @@ lines = stdout.readlines()
 channel = cli.invoke_shell()
  
 count = 0
+
+
 while True:
-    channel.send("curl --unix-socket /var/run/docker.sock http://localhost/v1.41/containers/data-manager/stats?stream=true\n")
+    channel.send("curl --unix-socket /var/run/docker.sock http://localhost/v1.41/containers/{container_name}}/stats?stream=true\n")
     time.sleep(0.9)
     # 결과 수신
     output = channel.recv(65535).decode("UTF-8").replace(";",'"')

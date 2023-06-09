@@ -1,6 +1,6 @@
 from elasticsearch import Elasticsearch
 import pandas as pd 
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
 import psycopg2
 import psycopg2.extras
@@ -45,6 +45,10 @@ def insert(conn,schema,tablename,container,cpu,mem,datetime):
     cur.execute(insert_query, record_to_insert)
 
 
+def round_seconds(obj: datetime) -> datetime:
+    if obj.microsecond >= 500_000:
+        obj += timedelta(seconds=1)
+    return obj.replace(microsecond=0)
 
 
 # from pandas.io.json import json_normalize
@@ -54,18 +58,33 @@ print(es)
 # index = "zipkin-span*"
 index = "zipkin-span*"
 
-query = {"query": {
-
-    "wildcard": {
-
-        "name": "*ndxpro/*"
-    }
-  },
-
-   "_source": ["duration", "localEndpoint.serviceName","timestamp_millis","name"]
+query = {
+            "query":{
+                "bool":{
+                    "must":[
+                        {
+                        "wildcard":{
+                            "name":"*ndxpro/*"
+                        }
+                        },
+                        {
+                        "match":{
+                            "localEndpoint.serviceName":"databroker-service"
+                        }
+                        }
+                    ]
+                }
+            },
+            "_source":[
+                "duration",
+                "localEndpoint.serviceName",
+                "timestamp_millis",
+                "name"
+            ]
+            
 }
 
-res = es.search(index=index,body = query, size=1000)
+res = es.search(index=index,body = query, size=10000)
 
 elastic_lst = []
 # elastic search data ingesting
@@ -74,8 +93,7 @@ for i in range(len(res['hits']['hits'])):
     # response time
     res_timestamp = res['hits']['hits'][i]["_source"]["timestamp_millis"]
     res_datetime = datetime.fromtimestamp(res_timestamp/1000)
-    res_datetime = res_datetime.strftime("%Y-%m-%d %H:%M:%S.%f")
-    
+    res_datetime = round_seconds(res_datetime).strftime("%Y-%m-%dT%H:%M:%S")
     
     #servicename
     res_service_name = res['hits']['hits'][i]["_source"]["localEndpoint"]["serviceName"]
@@ -104,48 +122,63 @@ for i in range(len(res['hits']['hits'])):
 elastic_df = pd.DataFrame(elastic_lst)
 print(elastic_df)
 
-conn = psycopg2.connect(
-        host="localhost",
-        port="5432",
-        database="postgres",
-        user="postgres",
-        password="123123"
-    )
-
-cur = conn.cursor()
+# for index, row in elastic_df.iterrows():
+#     print(row['response_time'])
 
 
-count = 1
-start = time.time()
-for index, row in elastic_df.iterrows(): 
+try:
+        elastic_conn = connect_db("localhost",'postgres','postgres','123123',5432)
+        
+        cur = elastic_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        # gateway_header = ['service_id','api_id','request_time','response_time']
+        # logger.info(f"{container_name}: DB connected successfully,  Time: {datetime.now()}")
+        
+except psycopg2.DatabaseError as db_err:
+    print(db_err)
     
-    # table_name = row['service_name']
-    # print(table_name)
-    # print(row)
     
-    
-    
-    schema_name = 'datainferenceelastic'
-    table_name = row['service_name']
-    full_table_name = f'{schema_name}.{table_name}'
-
-    # Connect to the PostgreSQL database
-    
-    print(elastic_df)
-    print(type(row))
-    # Create a SQLAlchemy engine
-    # engine = create_engine('postgresql+psycopg2://postgres:123123@localhost:5432/postgres')
-    
-    # cur.execute(f"INSERT INTO {full_table_name} (service_name,api_name,response_time,duration) VALUES ({row['service_name']},{row['api_name']},{row['response_time']},{row['duration']})")
-    # conn.commit()
-    # row.to_sql(full_table_name,engine, if_exists='append', index = False)
-    # print(row['service_name'], count)
-    # count += 1
+for index, row in elastic_df.iterrows():
+        if row["service_name"] == "databrokerservice":
+            insert_query = """ INSERT INTO datainferenceelastic.databrokerservice (service_name, api_name, response_time, duration) VALUES (%s,%s,%s,%s)"""
+            record_to_insert = (row["service_name"],row["api_name"],row["response_time"],row["duration"])
+            cur.execute(insert_query, record_to_insert)
+            elastic_conn.commit()
 
 
-print("time cost: ",time.time()-start)
-cur.close()
-conn.close()
+
+
+
+# count = 1
+# start = time.time()
+# for index, row in elastic_df.iterrows(): 
+    
+#     # table_name = row['service_name']
+#     # print(table_name)
+#     # print(row)
+    
+    
+    
+#     schema_name = 'datainferenceelastic'
+#     table_name = row['service_name']
+#     full_table_name = f'{schema_name}.{table_name}'
+
+#     # Connect to the PostgreSQL database
+    
+#     print(elastic_df)
+#     print(type(row))
+#     # Create a SQLAlchemy engine
+#     # engine = create_engine('postgresql+psycopg2://postgres:123123@localhost:5432/postgres')
+
+#     # cur.execute(f"INSERT INTO {full_table_name} (service_name,api_name,response_time,duration) VALUES ({row['service_name']},{row['api_name']},{row['response_time']},{row['duration']})")
+#     # conn.commit()
+#     # row.to_sql(full_table_name,engine, if_exists='append', index = False)
+#     # print(row['service_name'], count)
+#     # count += 1
+
+
+# print("time cost: ",time.time()-start)
+# cur.close()
+# conn.close()
     
 # postgres_data = []
 # postgres_conn = connect_db("localhost",'postgres','postgres','123123',5432)

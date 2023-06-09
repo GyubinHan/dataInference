@@ -11,14 +11,7 @@ import psycopg2.extras
 import logging
 
 
-
-def round_seconds(dt):
-    seconds = (dt - dt.min).seconds
-    rounding = (seconds + 5) // 10 * 10
-    rounded_dt = dt + timedelta(0, rounding - seconds)
-    return rounded_dt
-
-def round_seconds2(obj: datetime) -> datetime:
+def round_seconds(obj: datetime) -> datetime:
     if obj.microsecond >= 500_000:
         obj += timedelta(seconds=1)
     return obj.replace(microsecond=0)
@@ -114,7 +107,7 @@ logger.setLevel(level=logging.INFO)
 
 # table명 정리
 table = container_name.replace("data-", "data")
-table = table.replace(table[4:],"brokerservice")
+table = table.replace(table[4:],"brokerservice3")
 # postgres_data = []
 
 # postgres_rows = select(postgress_conn,"postgres")
@@ -126,7 +119,9 @@ postgres_header = ['containerID','CPU','Mem','datetime']
 
 while True:
     try:
-        postgres_conn = connect_db("host.docker.internal",'postgres','postgres','123123',5432)
+        # postgres_conn = connect_db("host.docker.internal",'postgres','postgres','123123',5432)
+        postgres_conn = connect_db("localhost",'postgres','postgres','123123',5432)
+        
         
         cur = postgres_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         # gateway_header = ['service_id','api_id','request_time','response_time']
@@ -140,7 +135,7 @@ while True:
     send_message = f"curl --unix-socket /var/run/docker.sock http://localhost/v1.41/containers/{container_name}/stats?stream=true\n"
     # print(send_message)
     channel.send(send_message)
-    time.sleep(0.9)
+    time.sleep(0.85)
     # 결과 수신
     output = channel.recv(65535).decode("UTF-8").replace(";",'"')
 
@@ -148,7 +143,10 @@ while True:
     # now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     # new_now = f'{now}'
     now = datetime.now()
-    rounded_now = str(round_seconds2(now).strftime("%Y-%m-%dT%H:%M:%S"))
+    rounded_now = str(round_seconds(now).strftime("%Y-%m-%dT%H:%M:%S"))
+    
+    
+    
     try:
         resource = json.loads(output_lst[len(output_lst)-1].replace("'", "\""),strict=False)
 
@@ -176,15 +174,18 @@ while True:
 
     cpu_usage = (cpu_delta/system_cpu_delta) * num_cpus *100.0
     
-    postgres_conn = connect_db("localhost",'postgres','postgres','123123',5432)
+    # postgres_conn = connect_db("localhost",'postgres','postgres','123123',5432)
 
     docker_dict ={"container_name":container_name,
                   "cpu": cpu_usage,
                   "mem": memory_usage,
                   "datetime": now}
-    insert_query = """ INSERT INTO datainferencedocker.databrokerservice (container_name, cpu, memory, datetime) VALUES (%s,%s,%s,%s)"""
+    insert_query = """ INSERT INTO datainferencedocker.databrokerservice_1 (container_name, cpu, memory, datetime) VALUES (%s,%s,%s,%s)"""
+    insert_now = time.time()
     record_to_insert = (container_name,cpu_usage,memory_usage,rounded_now)
     cur.execute(insert_query, record_to_insert)
+    
+    print("inserting_time : ", time.time() - insert_now)
     
     # insert_query = """ INSERT INTO %s.%s (container_name, cpu, mem, datetime) VALUES (%s,%s,%s,%s)"""
     # insert_q2 = f'INSERT INTO {scheme}.{table} (container_name, cpu, mem, datetime) VALUES ({container_name},{cpu_usage},{memory_usage},{new_now} )'

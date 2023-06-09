@@ -81,8 +81,14 @@ logger.addHandler(ch)
 
 
 
+# print(table)
+
+# table = table.replace(container_name[3:],"broker")
+# print(table)
 
 
+
+ # ssh  접속 
 cli = paramiko.SSHClient()
 cli.set_missing_host_key_policy(paramiko.AutoAddPolicy)
 
@@ -96,39 +102,32 @@ cli.connect(server, username=user, password="!!ndxpro123!!220")
 stdin, stdout, stderr = cli.exec_command("ls -la")
 lines = stdout.readlines()
 
- 
+
 # 새로운 interactive shell session 생성
 channel = cli.invoke_shell()
- 
+
 # container_name = "dat"
 
 logger.setLevel(level=logging.INFO)
 # scheme = "datainferencedocker"
 # container_name = "data-broker-1"
 
-
+# table명 정리
 table = container_name.replace("data-", "data")
 table = table.replace(table[4:],"brokerservice")
-# print(table)
+# postgres_data = []
 
-# table = table.replace(container_name[3:],"broker")
-# print(table)
-
-
+# postgres_rows = select(postgress_conn,"postgres")
+# postgres_conn = connect_db("localhost",'postgres','postgres','123123',5432)
 
 
+postgres_header = ['containerID','CPU','Mem','datetime']
 
 
 while True:
     try:
-
-    # postgres_data = []
-        postgres_conn = connect_db("localhost",'postgres','postgres','123123',5432)
+        postgres_conn = connect_db("host.docker.internal",'postgres','postgres','123123',5432)
         
-        # postgres_rows = select(postgress_conn,"postgres")
-        
-        
-        postgres_header = ['containerID','CPU','Mem','datetime']
         cur = postgres_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         # gateway_header = ['service_id','api_id','request_time','response_time']
         logger.info(f"{container_name}: DB connected successfully,  Time: {datetime.now()}")
@@ -177,12 +176,15 @@ while True:
 
     cpu_usage = (cpu_delta/system_cpu_delta) * num_cpus *100.0
     
+    postgres_conn = connect_db("localhost",'postgres','postgres','123123',5432)
 
     docker_dict ={"container_name":container_name,
                   "cpu": cpu_usage,
                   "mem": memory_usage,
                   "datetime": now}
-    
+    insert_query = """ INSERT INTO datainferencedocker.databrokerservice (container_name, cpu, memory, datetime) VALUES (%s,%s,%s,%s)"""
+    record_to_insert = (container_name,cpu_usage,memory_usage,rounded_now)
+    cur.execute(insert_query, record_to_insert)
     
     # insert_query = """ INSERT INTO %s.%s (container_name, cpu, mem, datetime) VALUES (%s,%s,%s,%s)"""
     # insert_q2 = f'INSERT INTO {scheme}.{table} (container_name, cpu, mem, datetime) VALUES ({container_name},{cpu_usage},{memory_usage},{new_now} )'
@@ -192,13 +194,13 @@ while True:
     # cur.execute(insert_q2)
     # cur.execute(f"insert into {schema}.{tablename}(container_name,cpu,mem,datetime) values ({container},{cpu},{mem},{datetime})"
     #             .format(schema,tablename,container,cpu,mem,datetime))
-    insert_query = """ INSERT INTO datainferencedocker.databrokerservice (container_name, cpu, memory, datetime) VALUES (%s,%s,%s,%s)"""
-    record_to_insert = (container_name,cpu_usage,memory_usage,rounded_now)
-    cur.execute(insert_query, record_to_insert)
+    
     postgres_conn.commit()
     
     logger.info(f"{container_name} Time: {now} CPU: {cpu_usage} Memory: {memory_usage}")
-    postgres_conn.close()
+    # postgres_conn.close()
+    # channel.close()
+
     # cpu usage in percentages
     # print((string_to_dict['cpu_stats']['cpu_usage']['total_usage'] / string_to_dict['cpu_stats']['system_cpu_usage']) * 100) 
 

@@ -8,7 +8,7 @@ COPY /docker-volume/  /app/logFile
 
 # ENV CONTAINER_NAME "data-broker-3"
 # ENV DOCKER_LOG /app/logFile/docker-databroker.log
-
+RUN apt-get update && apt-get install -y procps && rm -rf /var/lib/apt/lists/*
 RUN pip install -r requirements.txt
 
 

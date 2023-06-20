@@ -6,7 +6,7 @@ version: '0'
 services:
 
   databroker-1:
-    image: dockerinsert
+    image: dockerdatainsert
     container_name: data-broker-1
     restart: always
     environment:
@@ -15,10 +15,10 @@ services:
       DOCKER_LOG: /app/logFile/docker-databroker.log
     volumes:
       - ./docker-volume/:/app/logFile/
-    # cpus: 0.2
+    cpus: 0.2
 
   databroker-2:
-    image: dockerinsert
+    image: dockerdatainsert
     container_name: data-broker-2
     restart: always
     environment:
@@ -28,9 +28,10 @@ services:
       DOCKER_LOG: /app/logFile/docker-databroker.log
     volumes:
       - ./docker-volume/:/app/logFile/
+    cpus: 0.2
   
   databroker-3:
-    image: dockerinsert
+    image: dockerdatainsert
     container_name: data-broker-3
     restart: always
     environment:
@@ -40,9 +41,10 @@ services:
       DOCKER_LOG: /app/logFile/docker-databroker.log
     volumes:
       - ./docker-volume/:/app/logFile/
+    cpus: 0.2
 
   databroker-4:
-    image: dockerinsert
+    image: dockerdatainsert
     container_name: data-broker-4
     restart: always
     environment:
@@ -52,10 +54,11 @@ services:
       DOCKER_LOG: /app/logFile/docker-databroker.log
     volumes:
       - ./docker-volume/:/app/logFile/
+    cpus: 0.2
   
     
   databroker-5:
-    image: dockerinsert
+    image: dockerdatainsert
     container_name: data-broker-5
     restart: always
     environment:
@@ -65,6 +68,7 @@ services:
       DOCKER_LOG: /app/logFile/docker-databroker.log
     volumes:
       - ./docker-volume/:/app/logFile/
+    cpus: 0.2
 
 
 

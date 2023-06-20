@@ -43,9 +43,9 @@ def insert(conn,schema,tablename,container,cpu,mem,datetime):
 
 
 # os environment
-container_name = os.environ['CONTAINER_NAME']
-docker_log = os.environ['DOCKER_LOG']
-# container_name = "data-broker-3"
+# container_name = os.environ['CONTAINER_NAME']
+# docker_log = os.environ['DOCKER_LOG']
+container_name = "data-broker-3"
 # container_name = "data-broker-2"
 
 
@@ -65,20 +65,6 @@ ch = logging.StreamHandler()
 ch.setLevel(logging.INFO)
 ch.setFormatter(formatter)
 logger.addHandler(ch)
-
-# f1 = logging.FileHandler(filename = docker_log)
-# f1.setLevel(logging.INFO)
-# f1.setFormatter(formatter)
-# logger.addHandler(f1)
-
-
-
-
-# print(table)
-
-# table = table.replace(container_name[3:],"broker")
-# print(table)
-
 
 
  # ssh  접속 
@@ -182,11 +168,11 @@ while True:
                   "datetime": now}
     insert_query = """ INSERT INTO datainferencedocker.databrokerservice_1 (container_name, cpu, memory, datetime) VALUES (%s,%s,%s,%s)"""
     insert_now = time.time()
-    record_to_insert = (container_name,cpu_usage,memory_usage,rounded_now)
-    cur.execute(insert_query, record_to_insert)
+    # record_to_insert = (container_name,cpu_usage,memory_usage,rounded_now)
+    # cur.execute(insert_query, record_to_insert)
     
     print("inserting_time : ", time.time() - insert_now)
-    
+    print(docker_dict)
     # insert_query = """ INSERT INTO %s.%s (container_name, cpu, mem, datetime) VALUES (%s,%s,%s,%s)"""
     # insert_q2 = f'INSERT INTO {scheme}.{table} (container_name, cpu, mem, datetime) VALUES ({container_name},{cpu_usage},{memory_usage},{new_now} )'
     
@@ -196,7 +182,7 @@ while True:
     # cur.execute(f"insert into {schema}.{tablename}(container_name,cpu,mem,datetime) values ({container},{cpu},{mem},{datetime})"
     #             .format(schema,tablename,container,cpu,mem,datetime))
     
-    postgres_conn.commit()
+    # postgres_conn.commit()
     
     logger.info(f"{container_name} Time: {now} CPU: {cpu_usage} Memory: {memory_usage}")
     # postgres_conn.close()
@@ -213,96 +199,3 @@ while True:
 
 
 
-
-
-
-import psycopg2
-import psycopg2.extras
-import pandas as pd
-
-
-# conn = psycopg2.connect(host="localhost",dbname='postgres',user='postgres',password='123123',port=5432)
-# cursor = conn.cursor()
-# row = []
-
-
-
-def connect_db(host, dbname, user, password, port):
-    return psycopg2.connect(host = host,dbname = dbname,user = user,password = password,port = port)
-    
-def select(conn, dbname):
-    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    cur.execute(f"select * from {dbname}".format(dbname))
-    rows = cur.fetchall()
-    
-    return rows
-
-def dict_maker(header, row):
-    result_dict = dict(zip(header,row))
-    return result_dict
-
-    # gatway_conn = connect_db(host="localhost",dbname='gateway',user='postgres',password='123123',port=5432)
-    
-    # cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    # cur2 = conn2.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    
-    # cur.execute("select * from postgres")
-    # cur2.execute("select * from gateway")
-    
-    # rows = cur.fetchall()
-
-try:
-
-    postgres_data = []
-    gateway_data = []
-    postgress_conn = connect_db("localhost",'postgres','postgres','123123',5432)
-    gateway_conn = connect_db("localhost",'postgres','postgres','123123',5432)
-    
-    postgres_rows = select(postgress_conn,"postgres")
-    
-    gateway_rows = select(gateway_conn,"gateway")
-    
-    postgres_header = ['serviceID','containerID','CPU','Mem','datetime']
-    gateway_header = ['service_id','api_id','request_time','response_time']
-    
-    for row in postgres_rows:
-        postgres_data.append(dict_maker(postgres_header,row))
-    
-    for row in gateway_rows:
-        gateway_data.append(dict_maker(gateway_header,row))
-    
-    final_data = pd.DataFrame(postgres_data)
-    
-    for i in range(len(gateway_data)):
-        for k, v in gateway_data[i].items():
-            if k == 'service_id':
-                pass
-
-            else:
-                final_data[k] = v
-                
-        for index, row in final_data.iterrows():
-        # if final_data[i]['api_id'] == final_data[i]['container_id']:
-        #     print(final_data[i])
-        
-            if row['containerID'] == row['api_id']:
-                print(row)
-    
-    # gateway_data.append(dict_maker(header,gateway_rows))
-    # lst = [i[0].split(',') for i in header]
-    # df = []
-    # resource_dict = {}
-    
-    # for row in rows:
-    #     result_dict = dict(zip(header,row))
-    #     df.append(result_dict)
-        
-        # df.append(dict)
-    # print([dict(zip(lst[0], v)) for v in lst[1:]])
-    
-    # print(postgres_data)
-    # print(gateway_data)
-except psycopg2.DatabaseError as db_err:
-    print(db_err)
-    
-channel.close()

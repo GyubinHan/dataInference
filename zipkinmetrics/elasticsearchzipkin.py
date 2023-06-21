@@ -134,7 +134,7 @@ print(elastic_df)
 
 
 
-## data insert
+## data
 # try:
 #         elastic_conn = connect_db("localhost",'postgres','postgres','123123',5432)
         

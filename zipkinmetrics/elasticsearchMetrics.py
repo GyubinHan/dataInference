@@ -6,6 +6,7 @@ import psycopg2
 import psycopg2.extras
 import pandas as pd
 from sqlalchemy import create_engine
+from dateutil import parser
 import time
 import os
 
@@ -76,7 +77,7 @@ query = {
                         },
                         {
                         "match":{
-                            "container.name":"data-broker-1"
+                            "container.name":"data-broker-2"
                             # "container.name": CONTAINER_NAME
                             
                             # "localEndpoint.serviceName":SERVICE_NAME
@@ -96,23 +97,60 @@ query = {
             
 }
 
-res = es.search(index=index,body = query, size=10000)
+res = es.search(index=index,body = query, scroll= '2m', size=10000)
 
 elastic_lst = []
 # elastic search data ingesting
+count = 0 
+# Start scrolling through the results
+scroll_id = res['_scroll_id']
+total_docs = res['hits']['total']['value']
+scroll_size = len(res['hits']['hits'])
+
+# while scroll_size > 0:
+#     # Get the next page of results
+#     response = es.scroll(
+#         scroll_id=scroll_id,
+#         scroll="2m"
+#     )
+#     new_data = pd.DataFrame()
+#     # Process the current page of results
+for hit in res['hits']['hits']:
+    # Do something with the document (hit['_source'])
+    print(hit['_source'])
+    # new_data.append(pd.DataFrame(hit["_source"]))
+    count += 1
+
+# Update the scroll ID and scroll size for the next iteration
+# scroll_id = res['_scroll_id']
+scroll_size = len(res['hits']['hits'])
+
+# Clear the scroll
+es.clear_scroll(
+    scroll_id=scroll_id
+)
+
+print("Count",count)
+# print(new_data.head())
 
 
 
-for i in range(len(res['hits']['hits'])):
-    # print(res['hits']['hits'][i])
+
+# for i in range(len(res['hits']['hits'])):
+#     # print(res['hits']['hits'][i])
     
-    # container_name
-    res_container_name = res['hits']['hits'][i]['_source']["container"]["name"]
+#     # container_name
+#     res_container_name = res['hits']['hits'][i]['_source']["container"]["name"]
     
-    # response_time
-    res_time = res['hits']['hits'][i]['_source']["@timestamp"]
-    print(res_time)
-print(len(res['hits']['hits']))
+#     # response_time
+#     res_time = res['hits']['hits'][i]['_source']["@timestamp"]
+#     date = parser.parse(res_time)
+#     # print(date)
+#     res_time = date + timedelta(hours=9)
+#     print(res_time.strftime('%Y-%m-%d %H:%M:%S' ))
+#     # print(datetime.strptime(res_time, '%Y-%m-%d %H:%M:%S'))
+#     # print(datetime.strptime(res_time))
+# print(len(res['hits']['hits']))
     # print(res_container_name, res_time)
 # for i in range(len(res['hits']['hits'])):
 #     # response time

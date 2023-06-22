@@ -37,7 +37,9 @@ _KEEP_ALIVE_LIMIT='20s'
 # os environment
 
 es = Elasticsearch('http://elastic:ndxpro123!@172.16.28.220:59200')
-index = "metricbeat-7.17.0-2023.06.19-000001"
+# index = "metricbeat-7.17.0-2023.06.19-000001"
+index = "ndxpro-metricbeat*"
+
 
 query = {
             "query":{
@@ -50,7 +52,7 @@ query = {
                         },
                         {
                         "match":{
-                            "container.name":"data-broker-2"
+                            "container.name":"data-broker-1"
                             # "container.name": CONTAINER_NAME
                             
                             # "localEndpoint.serviceName":SERVICE_NAME
@@ -101,8 +103,6 @@ try:
         
         
         
-        # es_df.append(response['hits']['hits'][i]['_source'])
-        
         # es_df = es_df.append(es_dict(response['hits']['hits'][i]['_source']["localEndpoint"]["serviceName"],response['hits']['hits'][i]['_source'],response['hits']['hits'][i]['_source'],response['hits']['hits'][i]['_source']))
     while(fetched>0):
         response = es.scroll(scroll_id=sid, scroll=_KEEP_ALIVE_LIMIT)
@@ -130,9 +130,15 @@ except exceptions.ElasticsearchException as e:
     print(f"An Elasticsearch error occurred: {e}")
 
 print (es_df)
-print(es_df.sort_values('timestamp', ascending=True))
+es_df = es_df.sort_values('timestamp', ascending=True)
 print(len(es_df))
 
 # print(type(es_df[0][1]))
-# print(es_df[0][1])
+# print(es_df[0][1])3z
 print("finished in ", time.time() - start)
+
+# print("saving to csv")
+
+es_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/elastic-data-broker-1-5seconds.csv",sep=',',na_rep='NaN')
+
+# print("CSV SAVING DONE")

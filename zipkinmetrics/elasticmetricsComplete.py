@@ -24,7 +24,7 @@ def es_dict(container_name,cpu_usage,timestamp):
         # "api_name":api_name,
         "container_name":container_name,
         "cpu_usage":cpu_usage,
-        "timestamp":timestamp
+        "metricset_timestamp":timestamp
     }
     
     return new_dict
@@ -81,7 +81,7 @@ response = es.search(index = index,
 sid = response['_scroll_id']
 fetched = len(response['hits']['hits'])
 
-es_df = pd.DataFrame(columns=['container_name','cpu_usage','timestamp'])
+es_df = pd.DataFrame(columns=['container_name','cpu_usage','metricset_timestamp'])
 es_lst = []
 print("data insert start ")
 start = time.time()
@@ -113,7 +113,7 @@ try:
             container_name = response['hits']['hits'][i]['_source']['container']['name']
             cpu_usage = response['hits']['hits'][i]['_source']['docker']["cpu"]["total"]["pct"]
             time_stamp = response['hits']['hits'][i]['_source']['@timestamp']
-            print(type(time_stamp),time_stamp)                
+            # print(type(time_stamp),time_stamp)                
             date = parser.parse(time_stamp)
             
             res_time = date + timedelta(hours=9)
@@ -131,15 +131,15 @@ except exceptions.ElasticsearchException as e:
     print(f"An Elasticsearch error occurred: {e}")
 
 print (es_df)
-es_df = es_df.sort_values('timestamp', ascending=True)
+es_df = es_df.sort_values('metricset_timestamp', ascending=True)
 print(len(es_df))
 
 # print(type(es_df[0][1]))
 # print(es_df[0][1])3z
 print("finished in ", time.time() - start)
 
-# print("saving to csv")
+print("saving to csv")
 
-# es_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/elastic-data-broker-1-5seconds.csv",sep=',',na_rep='NaN')
+es_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/elastic-data-broker-1-5seconds.csv",sep=',',na_rep='NaN')
 
-# print("CSV SAVING DONE")
+print("CSV SAVING DONE")

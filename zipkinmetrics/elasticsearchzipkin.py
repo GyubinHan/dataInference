@@ -104,7 +104,7 @@ elastic_lst = []
 
 sid = response['_scroll_id']
 fetched = len(response['hits']['hits'])
-zipkin_df = pd.DataFrame(columns=['service_name','api_name', 'timestamp', 'duration'])
+zipkin_df = pd.DataFrame(columns=['service_name','api_name', 'zipkin_timestamp', 'duration'])
 
 print("data insert start ")
 
@@ -168,7 +168,7 @@ except exceptions.ElasticsearchException as e:
 
 print(zipkin_df)
 
-print(zipkin_df.sort_values('timestamp', ascending=True))
+print(zipkin_df.sort_values('zipkin_timestamp', ascending=True))
 print(len(zipkin_df))
 
 

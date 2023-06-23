@@ -139,6 +139,6 @@ print("finished in ", time.time() - start)
 
 # print("saving to csv")
 
-es_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/elastic-data-broker-1-5seconds.csv",sep=',',na_rep='NaN')
+# es_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/elastic-data-broker-1-5seconds.csv",sep=',',na_rep='NaN')
 
 # print("CSV SAVING DONE")

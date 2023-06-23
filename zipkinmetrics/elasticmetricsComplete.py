@@ -113,8 +113,9 @@ try:
             container_name = response['hits']['hits'][i]['_source']['container']['name']
             cpu_usage = response['hits']['hits'][i]['_source']['docker']["cpu"]["total"]["pct"]
             time_stamp = response['hits']['hits'][i]['_source']['@timestamp']
-                            
+            print(type(time_stamp),time_stamp)                
             date = parser.parse(time_stamp)
+            
             res_time = date + timedelta(hours=9)
             res_timestamp = round_seconds(res_time).strftime("%Y-%m-%dT%H:%M:%S")
             

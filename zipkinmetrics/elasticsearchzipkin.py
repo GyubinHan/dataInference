@@ -25,12 +25,12 @@ def docker_dict(header, row):
     result_dict = dict(zip(header,row))
     return result_dict
 
-def elasticsearch_dict(service_name,api_name, timestamp, duration):
+def elasticsearch_dict(service_name,api_name, timestamp_millisecond, duration):
     
     new_dict = {
         "service_name": service_name,
         "api_name":api_name,
-        "timestamp": datetime,
+        "zipkin_timestamp": timestamp_millisecond,
         "duration": duration
     }
     
@@ -104,80 +104,31 @@ elastic_lst = []
 
 sid = response['_scroll_id']
 fetched = len(response['hits']['hits'])
-es_df = pd.DataFrame(columns=['service_name','api_name', 'timestamp', 'duration'])
+zipkin_df = pd.DataFrame(columns=['service_name','api_name', 'timestamp', 'duration'])
 
 print("data insert start ")
 
+# print(response['hits']['hits'])
 
-# for i in range(len(res['hits']['hits'])):
-#     # response time
-#     res_timestamp = res['hits']['hits'][i]["_source"]["timestamp_millis"]
-#     res_datetime = datetime.fromtimestamp(res_timestamp/1000)
-#     res_datetime = round_seconds(res_datetime).strftime("%Y-%m-%dT%H:%M:%S")
-    
-#     #servicename
-#     res_service_name = res['hits']['hits'][i]["_source"]["localEndpoint"]["serviceName"]
-#     # if res_service_name.find("manager"):
-#         # res_service_name = re.sub("data","data",res_service_name)
-#     res_service_name = re.sub("-service","service",res_service_name)
-#     # print(res_service_name)
-    
-    
-#     # duration
-#     duration_time = res['hits']['hits'][i]["_source"]["duration"]
-#     # print(type(duration_time)) # int
-    
-#     # print(duration_time/1000.0)
-    
-
-#     # api name 
-#     api_name = res['hits']['hits'][i]["_source"]["name"]
-
-#     # elasticsearch data ingesting
-#     elastic_dict = elasticsearch_dict(res_service_name,api_name, res_datetime, duration_time/1000.0)   
-#     elastic_lst.append(elastic_dict)
-
-
-#### scrolling data
 try:
     for i in range(fetched):
-        # container_name = response['hits']['hits'][i]['_source']['container']['name']
-        # cpu_usage = response['hits']['hits'][i]['_source']['docker']["cpu"]["total"]["pct"]
-        # time_stamp = response['hits']['hits'][i]['_source']['@timestamp']
-        
-        
-        
-        res_timestamp = response['hits']['hits'][i]["_source"]["timestamp_millis"]
-        res_datetime = datetime.fromtimestamp(res_timestamp/1000)
-        res_datetime = round_seconds(res_datetime).strftime("%Y-%m-%dT%H:%M:%S")
-        
-        #servicename
-        res_service_name = response['hits']['hits'][i]["_source"]["localEndpoint"]["serviceName"]
-        # if res_service_name.find("manager"):
-            # res_service_name = re.sub("data","data",res_service_name)
-        res_service_name = re.sub("-service","service",res_service_name)
-        # print(res_service_name)
-        
-        
-        # duration
-        duration_time = response['hits']['hits'][i]["_source"]["duration"]
-        # print(type(duration_time)) # int
-        
-        # print(duration_time/1000.0)
-        
+        service_name = response['hits']['hits'][i]['_source']['localEndpoint']['serviceName']
+        api_name = response['hits']['hits'][i]['_source']['name']
+        timestamp_millis = response['hits']['hits'][i]['_source']['timestamp_millis']
+        duration = response['hits']['hits'][i]['_source']['duration']
+        timestamp_millis = str(datetime.fromtimestamp(timestamp_millis/1000))
 
-        # api name 
-        api_name = response['hits']['hits'][i]["_source"]["name"]
-        
-        # # data time adding 9 hours to make uct
-        # date = parser.parse(time_stamp)
-        # res_time = date + timedelta(hours=9)
-        # res_timestamp = round_seconds(res_time).strftime("%Y-%m-%dT%H:%M:%S")
-        
-        # # print(time_stamp, res_timestamp)
-        # # new = es_dict(container_name,cpu_usage,res_timestamp)
-        es_df.loc[len(es_df)] = list(elasticsearch_dict(res_service_name,api_name, res_datetime, duration_time).values())
-        
+        # datetime to UTC
+        date_timemilli = parser.parse(timestamp_millis)
+        res_time = date_timemilli + timedelta(hours=9)
+        res_timestamp = round_seconds(res_time).strftime("%Y-%m-%dT%H:%M:%S")
+       
+        # duration seconds 추출
+        duration = datetime.fromtimestamp(duration/1000)
+        duration = "{}.{}".format(duration.second, duration.microsecond)
+            
+        zipkin_df.loc[len(zipkin_df)] = list(elasticsearch_dict(service_name,api_name,res_timestamp,duration).values())
+    
         
         
         # es_df = es_df.append(es_dict(response['hits']['hits'][i]['_source']["localEndpoint"]["serviceName"],response['hits']['hits'][i]['_source'],response['hits']['hits'][i]['_source'],response['hits']['hits'][i]['_source']))
@@ -185,26 +136,44 @@ try:
         response = es.scroll(scroll_id=sid, scroll=_KEEP_ALIVE_LIMIT)
         fetched = len(response['hits']['hits'])
         for i in range(fetched):
-            # es_df.append(response['hits']['hits'][i]['_source']['@timestamp'])
-            # es_df.append([response['hits']['hits'][i]['_source']['docker']["cpu"]["total"]["pct"], response['hits']['hits'][i]['_source']['@timestamp']])
-            container_name = response['hits']['hits'][i]['_source']['container']['name']
-            cpu_usage = response['hits']['hits'][i]['_source']['docker']["cpu"]["total"]["pct"]
-            time_stamp = response['hits']['hits'][i]['_source']['@timestamp']
-                            
-            date = parser.parse(time_stamp)
-            res_time = date + timedelta(hours=9)
+            service_name = response['hits']['hits'][i]['_source']['localEndpoint']['serviceName']
+            api_name = response['hits']['hits'][i]['_source']['name']
+            timestamp_millis = response['hits']['hits'][i]['_source']['timestamp_millis']
+            duration = response['hits']['hits'][i]['_source']['duration']
+            timestamp_millis = str(datetime.fromtimestamp(timestamp_millis/1000))
+            
+            # duration seconds 추출
+            duration = datetime.fromtimestamp(duration/1000)
+            duration = "{}.{}".format(duration.second, duration.microsecond)
+            # print(duration)
+            
+            
+            # datetime to UTC
+            date_timemilli = parser.parse(timestamp_millis)
+            res_time = date_timemilli + timedelta(hours=9)
             res_timestamp = round_seconds(res_time).strftime("%Y-%m-%dT%H:%M:%S")
             
-            # es_df = pd.concat([es_df, pd.DataFrame(es_dict)], ignore_index=True)
-            # es_df.loc[len(es_df)] = list(es_dict.values())
-            es_df.loc[len(es_df)] = list(elasticsearch_dict(res_service_name,api_name, res_datetime, duration_time).values())
-
-            # es_df.append(response['hits']['hits'][i]['_source'])
+            # duration to datetime
+            # date_duration = parser.parse(duration)
+            # res_duration = date_duration.strftime("%ss")
             
+
+            zipkin_df.loc[len(zipkin_df)] = list(elasticsearch_dict(service_name,api_name,res_timestamp,duration).values())
+
+            # es_df.append(response['hits']['hits'][i]['_sour
+
 except exceptions.ElasticsearchException as e:
     # Handle the exception
     print(f"An Elasticsearch error occurred: {e}")
 
-print (es_df)
-print(es_df.sort_values('timestamp', ascending=True))
-print(len(es_df))
+print(zipkin_df)
+
+print(zipkin_df.sort_values('timestamp', ascending=True))
+print(len(zipkin_df))
+
+
+print("saving to csv")
+
+zipkin_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/zipkin-data-broker-1-5seconds.csv",sep=',',na_rep='NaN')
+
+print("CSV SAVING DONE")

@@ -24,7 +24,8 @@ def es_dict(container_name,cpu_usage,timestamp):
         # "api_name":api_name,
         "container_name":container_name,
         "cpu_usage":cpu_usage,
-        "metricset_timestamp":timestamp
+        "metricset_timestamp":timestamp,
+        "timestamp_5seconds":0
     }
     
     return new_dict
@@ -36,9 +37,14 @@ _KEEP_ALIVE_LIMIT='20s'
 
 # os environment
 
-es = Elasticsearch('http://elastic:ndxpro123!@172.16.28.220:59200')
+es = Elasticsearch('http://elastic:ndxpro123!@172.16.28.223:59200')
 # index = "metricbeat-7.17.0-2023.06.19-000001"
-index = "ndxpro-metricbeat*"
+index = "metricbeat-"
+now = datetime.now()
+now = now - timedelta(days = 1)
+now = now.strftime("%Y.%m.%d")
+
+index = index + now + '*'
 
 
 query = {
@@ -72,7 +78,6 @@ query = {
             
 }
 
-
 response = es.search(index = index,
                    scroll = _KEEP_ALIVE_LIMIT,
                    size = 100,
@@ -81,7 +86,7 @@ response = es.search(index = index,
 sid = response['_scroll_id']
 fetched = len(response['hits']['hits'])
 
-es_df = pd.DataFrame(columns=['container_name','cpu_usage','metricset_timestamp'])
+es_df = pd.DataFrame(columns=['container_name','cpu_usage','metricset_timestamp','timestamp_5seconds'])
 es_lst = []
 print("data insert start ")
 start = time.time()
@@ -138,8 +143,61 @@ print(len(es_df))
 # print(es_df[0][1])3z
 print("finished in ", time.time() - start)
 
-print("saving to csv")
 
-es_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/elastic-data-broker-1-5seconds.csv",sep=',',na_rep='NaN')
 
-print("CSV SAVING DONE")
+es_df = es_df.reset_index().rename(columns={'index': 'new_index'})
+print(es_df)
+
+# # zipkin_df['timestamp_5seconds'] = 0
+
+
+for idx, row in es_df.iterrows():
+    timestamp = datetime.strptime(row['metricset_timestamp'],"%Y-%m-%dT%H:%M:%S")
+#     seconds = datetime.strptime(row['timestamp'],"%S")
+    sec = timestamp.strftime("%S")
+    new_sec = int(sec)
+    
+#     print((new_sec%100//10)*10 + (new_sec%10)
+    es_df.loc[idx]['timestamp_5seconds']
+    
+    
+    
+    # new_timestamp in catetory every 5 seconds
+    if new_sec%10 < 5:
+            # es_df.loc[es_df['timestamp'],"new_timestamp"] = timestamp - timedelta(seconds = new_sec%10)
+            es_df.loc[idx:idx+1,'timestamp_5seconds'] = timestamp - timedelta(seconds = new_sec%10)
+            # print((new_sec%100//10)*10) + (new_sec%10)
+            # print(            timestamp - timedelta(seconds = new_sec%10))
+        
+    else:
+        # es_df.loc[idx]['new_timestamp'] = timestamp - timedelta(seconds = 3)
+        # es_df.loc[es_df['timestamp'],"new_timestamp"] = timestamp - timedelta(seconds = 3)
+        # print(new_sec)
+        es_df.loc[idx:idx+1,'timestamp_5seconds'] = timestamp - timedelta(seconds = new_sec%10 -5)
+            # print(            timestamp - timedelta(seconds = 3))
+        
+        
+# print(es_df)
+
+
+conn = psycopg2.connect(
+    host="172.16.28.223",
+    database="postgres",
+    user="postgres",
+    password="ndxpro123!"
+)
+
+# Create a SQLAlchemy engine
+# local
+# engine = create_engine('postgresql+psycopg2://postgres:123123@localhost:5432/postgres')
+
+# docker
+engine = create_engine('postgresql+psycopg2://postgres:ndxpro123!@172.16.28.223:55433/postgres')
+
+schema_name = "datainferencemetricset"
+# local
+table_name = "databrokerservice"
+#table_name = CONTAINER_NAME
+
+# Convert the DataFrame to a PostgreSQL-compatible format using the 'to_sql' method
+es_df.to_sql(schema=schema_name,name=table_name,con=engine, if_exists='replace', index=False) # table명 환경변수화 해야함

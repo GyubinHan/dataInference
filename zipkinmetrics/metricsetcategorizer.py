@@ -23,7 +23,7 @@ for idx, row in es_df.iterrows():
             es_df.loc[idx:idx+1,'new_timestamp'] = timestamp - timedelta(seconds = new_sec%10)
             # print((new_sec%100//10)*10) + (new_sec%10)
             # print(            timestamp - timedelta(seconds = new_sec%10))
-            
+        
     else:
         # es_df.loc[idx]['new_timestamp'] = timestamp - timedelta(seconds = 3)
         # es_df.loc[es_df['timestamp'],"new_timestamp"] = timestamp - timedelta(seconds = 3)

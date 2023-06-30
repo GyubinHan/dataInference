@@ -25,13 +25,15 @@ def docker_dict(header, row):
     result_dict = dict(zip(header,row))
     return result_dict
 
-def elasticsearch_dict(service_name,api_name, timestamp_millisecond, duration):
+def elasticsearch_dict(service_name,api_name, timestamp_millisecond, duration,traceid):
     
     new_dict = {
         "service_name": service_name,
         "api_name":api_name,
         "zipkin_timestamp": timestamp_millisecond,
-        "duration": duration
+        "duration": duration,
+        "traceId": traceid,
+        "timestamp_5seconds":0
     }
     
     return new_dict
@@ -56,13 +58,19 @@ def round_seconds(obj: datetime) -> datetime:
 # os.environment
 # SERVICE_NAME = os.environ['SERVICE_NAME']
 # from pandas.io.json import json_normalize
-es = Elasticsearch('http://elastic:ndxpro123!@172.16.28.220:59200')
+es = Elasticsearch('http://elastic:ndxpro123!@172.16.28.223:59200')
 # es = Elasticsearch('http://elastic:ndxpro123!@123.37.5.152:59200')
 
 print(es)
 
-# index = "zipkin-span*"
-index = "zipkin-span*"
+# index = "zipkin-span*
+
+now = datetime.now()
+now = now - timedelta(days = 1)
+now = now.strftime("%Y-%m-%d")
+index = "zipkin-span-"
+index = index + now + '*'
+print(index)
 _KEEP_ALIVE_LIMIT='20s'
 
 query = {
@@ -88,7 +96,8 @@ query = {
                 "duration",
                 "localEndpoint.serviceName",
                 "timestamp_millis",
-                "name"
+                "name",
+                "traceId"
             ]
             
 }
@@ -104,7 +113,7 @@ elastic_lst = []
 
 sid = response['_scroll_id']
 fetched = len(response['hits']['hits'])
-zipkin_df = pd.DataFrame(columns=['service_name','api_name', 'zipkin_timestamp', 'duration'])
+zipkin_df = pd.DataFrame(columns=['service_name','api_name', 'zipkin_timestamp', 'duration','traceId','timestamp_5seconds'])
 
 print("data insert start ")
 
@@ -116,6 +125,8 @@ try:
         api_name = response['hits']['hits'][i]['_source']['name']
         timestamp_millis = response['hits']['hits'][i]['_source']['timestamp_millis']
         duration = response['hits']['hits'][i]['_source']['duration']
+        traceid = response['hits']['hits'][i]['_source']['traceId']
+        
         timestamp_millis = str(datetime.fromtimestamp(timestamp_millis/1000))
 
         # datetime to UTC
@@ -127,7 +138,7 @@ try:
         duration = datetime.fromtimestamp(duration/1000)
         duration = "{}.{}".format(duration.second, duration.microsecond)
             
-        zipkin_df.loc[len(zipkin_df)] = list(elasticsearch_dict(service_name,api_name,res_timestamp,duration).values())
+        zipkin_df.loc[len(zipkin_df)] = list(elasticsearch_dict(service_name,api_name,res_timestamp,duration,traceid).values())
     
         
         
@@ -140,6 +151,8 @@ try:
             api_name = response['hits']['hits'][i]['_source']['name']
             timestamp_millis = response['hits']['hits'][i]['_source']['timestamp_millis']
             duration = response['hits']['hits'][i]['_source']['duration']
+            traceid = response['hits']['hits'][i]['_source']['traceId']
+            
             timestamp_millis = str(datetime.fromtimestamp(timestamp_millis/1000))
             
             # duration seconds 추출
@@ -158,7 +171,7 @@ try:
             # res_duration = date_duration.strftime("%ss")
             
 
-            zipkin_df.loc[len(zipkin_df)] = list(elasticsearch_dict(service_name,api_name,res_timestamp,duration).values())
+            zipkin_df.loc[len(zipkin_df)] = list(elasticsearch_dict(service_name,api_name,res_timestamp,duration,traceid).values())
 
             # es_df.append(response['hits']['hits'][i]['_sour
 
@@ -166,14 +179,73 @@ except exceptions.ElasticsearchException as e:
     # Handle the exception
     print(f"An Elasticsearch error occurred: {e}")
 
+zipkin_df = zipkin_df.sort_values('zipkin_timestamp', ascending=True)
 print(zipkin_df)
-
-print(zipkin_df.sort_values('zipkin_timestamp', ascending=True))
 print(len(zipkin_df))
 
+# print(zipkin_df.info())
 
-print("saving to csv")
+zipkin_df = zipkin_df.reset_index().rename(columns={'index': 'new_index'})
+print(zipkin_df)
 
-zipkin_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/zipkin-data-broker-1-5seconds.csv",sep=',',na_rep='NaN')
+# # zipkin_df['timestamp_5seconds'] = 0
 
-print("CSV SAVING DONE")
+
+for idx, row in zipkin_df.iterrows():
+    timestamp = datetime.strptime(row['zipkin_timestamp'],"%Y-%m-%dT%H:%M:%S")
+#     seconds = datetime.strptime(row['timestamp'],"%S")
+    sec = timestamp.strftime("%S")
+    new_sec = int(sec)
+    
+#     print((new_sec%100//10)*10 + (new_sec%10)
+    zipkin_df.loc[idx]['timestamp_5seconds']
+    
+    
+    
+    # new_timestamp in catetory every 5 seconds
+    if new_sec%10 < 5:
+            # es_df.loc[es_df['timestamp'],"new_timestamp"] = timestamp - timedelta(seconds = new_sec%10)
+            zipkin_df.loc[idx:idx+1,'timestamp_5seconds'] = timestamp - timedelta(seconds = new_sec%10)
+            # print((new_sec%100//10)*10) + (new_sec%10)
+            # print(            timestamp - timedelta(seconds = new_sec%10))
+        
+    else:
+        # es_df.loc[idx]['new_timestamp'] = timestamp - timedelta(seconds = 3)
+        # es_df.loc[es_df['timestamp'],"new_timestamp"] = timestamp - timedelta(seconds = 3)
+        # print(new_sec)
+        zipkin_df.loc[idx:idx+1,'timestamp_5seconds'] = timestamp - timedelta(seconds = new_sec%10 -5)
+            # print(            timestamp - timedelta(seconds = 3))
+        
+        
+        
+
+conn = psycopg2.connect(
+    host="172.16.28.223",
+    database="postgres",
+    user="postgres",
+    password="ndxpro123!"
+)
+
+# Create a SQLAlchemy engine
+# local
+# engine = create_engine('postgresql+psycopg2://postgres:123123@localhost:5432/postgres')
+
+# docker
+engine = create_engine('postgresql+psycopg2://postgres:ndxpro123!@172.16.28.223:55433/postgres')
+
+schema_name = "datainferencezipkin"
+# local
+table_name = "databrokerservice"
+#table_name = CONTAINER_NAME
+
+# Convert the DataFrame to a PostgreSQL-compatible format using the 'to_sql' method
+zipkin_df.to_sql(schema=schema_name,name=table_name,con=engine, if_exists='replace', index=False) # table명 환경변수화 해야함
+
+
+
+
+# print("saving to csv")
+
+# zipkin_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/zipkin223-data-broker-1-2023-06-28.csv",sep=',',na_rep='NaN')
+
+# print("CSV SAVING DONE")

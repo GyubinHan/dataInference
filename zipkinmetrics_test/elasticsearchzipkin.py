@@ -71,8 +71,8 @@ logging.basicConfig(filename='data_insert.log', level=logging.INFO, format='%(as
 now = datetime.now()
 now = now - timedelta(days = 1)
 now = now.strftime("%Y-%m-%d")
-index = "zipkin-span-"
-index = index + now + '*'
+index = "zipkin*"
+# index = index + now + '*'
 # print(index)
 _KEEP_ALIVE_LIMIT='20s'
 
@@ -87,7 +87,9 @@ query = {
                         },
                         {
                         "match":{
-                            "localEndpoint.serviceName":"databroker-service"
+                            "localEndpoint.serviceName":"databroker-ai-service"
+                            # "localEndpoint.serviceName":"databroker-service"
+                            
                             # "localEndpoint.serviceName":SERVICE_NAME
                             
                         }
@@ -219,46 +221,53 @@ for idx, row in zipkin_df.iterrows():
         zipkin_df.loc[idx:idx+1,'timestamp_5seconds'] = timestamp - timedelta(seconds = new_sec%10 -5)
             # print(            timestamp - timedelta(seconds = 3))
         
+print(zipkin_df)
         
-        
 
-conn = psycopg2.connect(
-    host="172.16.28.223",
-    database="postgres",
-    user="postgres",
-    password="ndxpro123!"
-)
+print("saving to csv")
 
-# Create a SQLAlchemy engine
-# local
-# engine = create_engine('postgresql+psycopg2://postgres:123123@localhost:5432/postgres')
+zipkin_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/zipkin-230711-all-broker.csv",sep=',',na_rep='NaN')
 
-# docker
+print("CSV SAVING DONE")
 
 
-try:
-    conn = psycopg2.connect(
-        host="172.16.28.223",
-        database="postgres",
-        user="postgres",
-        password="ndxpro123!"
-    )
-    logging.info("Database connection established")
-    engine = create_engine('postgresql+psycopg2://postgres:ndxpro123!@172.16.28.223:55433/postgres')
+# conn = psycopg2.connect(
+#     host="172.16.28.223",
+#     database="postgres",
+#     user="postgres",
+#     password="ndxpro123!"
+# )
 
-    schema_name = "datainferencezipkin"
-    # local
-    table_name = "databrokerservice"
-    #table_name = CONTAINER_NAME
+# # Create a SQLAlchemy engine
+# # local
+# # engine = create_engine('postgresql+psycopg2://postgres:123123@localhost:5432/postgres')
 
-    # Convert the DataFrame to a PostgreSQL-compatible format using the 'to_sql' method
-    zipkin_df.to_sql(schema=schema_name,name=table_name,con=engine, if_exists='replace', index=False) # table명 환경변수화 해야함
-    logging.info("Dataframe insert success")
+# # docker
+
+
+# try:
+#     conn = psycopg2.connect(
+#         host="172.16.28.223",
+#         database="postgres",
+#         user="postgres",
+#         password="ndxpro123!"
+#     )
+#     logging.info("Database connection established")
+#     engine = create_engine('postgresql+psycopg2://postgres:ndxpro123!@172.16.28.223:55433/postgres')
+
+#     schema_name = "datainferencezipkin"
+#     # local
+#     table_name = "databrokerservice"
+#     #table_name = CONTAINER_NAME
+
+#     # Convert the DataFrame to a PostgreSQL-compatible format using the 'to_sql' method
+#     zipkin_df.to_sql(schema=schema_name,name=table_name,con=engine, if_exists='replace', index=False) # table명 환경변수화 해야함
+#     logging.info("Dataframe insert success")
     
-    # Rest of your code ...
+#     # Rest of your code ...
     
-except psycopg2.Error as e:
-    logging.error(f"Error connecting to the database: {e}")
+# except psycopg2.Error as e:
+#     logging.error(f"Error connecting to the database: {e}")
 
 
 

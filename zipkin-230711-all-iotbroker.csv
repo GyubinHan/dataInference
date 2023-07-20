@@ -1,0 +1,19 @@
+,new_index,service_name,api_name,zipkin_timestamp,duration,traceId,timestamp_5seconds
+0,17,iotdatabroker-service,post /ndxpro/v2/iotbroker/entities,2023-07-06T00:59:52,6.121000,d2370a1c7247f835,2023-07-06 00:59:50
+1,5,iotdatabroker-service,get /ndxpro/v2/iotbroker/entities,2023-07-11T00:35:57,21.340000,e10406ea490f14c7,2023-07-11 00:35:55
+2,9,iotdatabroker-service,get /ndxpro/v2/iotbroker/entities,2023-07-11T00:35:58,26.497000,b903a57e48bab3fb,2023-07-11 00:35:55
+3,10,iotdatabroker-service,get /ndxpro/v2/iotbroker/entities,2023-07-11T00:35:59,21.531000,8ab153859215a426,2023-07-11 00:35:55
+4,1,iotdatabroker-service,get /ndxpro/v2/iotbroker/entities,2023-07-11T00:36:00,19.525000,13bef97ea2cd7d38,2023-07-11 00:36:00
+5,13,iotdatabroker-service,get /ndxpro/v2/iotbroker/entities,2023-07-11T00:36:30,19.110000,96386cdd6d000f52,2023-07-11 00:36:30
+6,12,iotdatabroker-service,get /ndxpro/v2/iotbroker/entities,2023-07-11T00:36:31,11.487000,3095efa0bbe6bfd9,2023-07-11 00:36:30
+7,0,iotdatabroker-service,get /ndxpro/v2/iotbroker/temporal/entities,2023-07-11T00:42:44,21.613000,397a44594f9c37af,2023-07-11 00:42:40
+8,2,iotdatabroker-service,get /ndxpro/v2/iotbroker/entities,2023-07-11T01:59:49,46.397000,5e844956ed1dcbb4,2023-07-11 01:59:45
+9,4,iotdatabroker-service,get /ndxpro/v2/iotbroker/entities,2023-07-11T01:59:52,25.358000,cb46748bdd81cfa3,2023-07-11 01:59:50
+10,11,iotdatabroker-service,get /ndxpro/v2/iotbroker/entities,2023-07-11T01:59:53,21.737000,1f5170fb321fa95c,2023-07-11 01:59:50
+11,14,iotdatabroker-service,get /ndxpro/v2/iotbroker/entities,2023-07-11T01:59:53,15.779000,5bb9478ad2bb7764,2023-07-11 01:59:50
+12,3,iotdatabroker-service,get /ndxpro/v2/iotbroker/temporal/entities,2023-07-11T02:00:00,19.58000,9cfe32730577dc5f,2023-07-11 02:00:00
+13,15,iotdatabroker-service,get /ndxpro/v2/iotbroker/temporal/entities,2023-07-11T02:01:38,18.360000,e31d73bb5097a1ff,2023-07-11 02:01:35
+14,16,iotdatabroker-service,get /ndxpro/v2/iotbroker/temporal/entities,2023-07-11T02:01:39,20.583000,ede84e278f1b1de7,2023-07-11 02:01:35
+15,6,iotdatabroker-service,get /ndxpro/v2/iotbroker/temporal/entities,2023-07-11T02:05:25,18.896000,a2f76acd5ed9a7cd,2023-07-11 02:05:25
+16,7,iotdatabroker-service,get /ndxpro/v2/iotbroker/entities,2023-07-11T02:26:41,15.778000,47653985f5906ddf,2023-07-11 02:26:40
+17,8,iotdatabroker-service,get /ndxpro/v2/iotbroker/temporal/entities,2023-07-11T02:29:01,52.771000,0adf4ee32944977a,2023-07-11 02:29:00

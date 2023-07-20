@@ -31,6 +31,7 @@ from keras.callbacks import ReduceLROnPlateau
 
 merged = pd.read_csv("merged-230704.csv")
 
+print(merged)
 ################## chatgpt  ############################################################################################################
 # selected_features = ['api_name', 'zipkin_timestamp', 'traceId', 'timestamp_5seconds', 'container_name',
 #                      'cpu_usage', 'metricset_timestamp']

@@ -1,7 +1,7 @@
 from elasticsearch import Elasticsearch, exceptions
 import elasticsearch
 import time
-import pandas as pd 
+import pandas as pd
 from datetime import datetime, timedelta
 import re
 import psycopg2
@@ -39,14 +39,14 @@ logging.basicConfig(filename='data_insert.log', level=logging.INFO, format='%(as
 
 # os environment
 
-es = Elasticsearch('http://elastic:ndxpro123!@172.16.28.223:59200')
+es = Elasticsearch('http://elastic:ndxpro123!@172.16.28.222:59200')
 # index = "metricbeat-7.17.0-2023.06.19-000001"
-index = "metricbeat-"
-now = datetime.now()
-now = now - timedelta(days = 1)
-now = now.strftime("%Y.%m.%d")
+index = "metric*"
+# now = datetime.now()
+# now = now - timedelta(days = 1)
+# now = now.strftime("%Y.%m.%d")
 
-index = index + now + '*'
+# index = index + now + '*'
 
 
 query = {
@@ -60,7 +60,7 @@ query = {
                         },
                         {
                         "match":{
-                            "container.name":"data-broker-1"
+                            "container.name":"data-broker-ai-1"
                             # "container.name": CONTAINER_NAME
                             
                             # "localEndpoint.serviceName":SERVICE_NAME
@@ -176,45 +176,50 @@ for idx, row in es_df.iterrows():
             # print(            timestamp - timedelta(seconds = 3))
         
         
-# print(es_df)
+print(es_df)
 
+print("saving to csv")
 
-conn = psycopg2.connect(
-    host="172.16.28.223",
-    database="postgres",
-    user="postgres",
-    password="ndxpro123!"
-)
+es_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/metricbeat-230719-ai-broker-1.csv",sep=',',na_rep='NaN')
+
+print("CSV SAVING DONE")
+
+# conn = psycopg2.connect(
+#     host="172.16.28.223", 
+#     database="postgres",
+#     user="postgres",
+#     password="ndxpro123!"
+# )
 
 # Create a SQLAlchemy engine
 # local
 # engine = create_engine('postgresql+psycopg2://postgres:123123@localhost:5432/postgres')
 
 
-try:
-    conn = psycopg2.connect(
-        host="172.16.28.223",
-        database="postgres",
-        user="postgres",
-        password="ndxpro123!"
-    )
-    logging.info("Database connection established")
+# try:
+#     conn = psycopg2.connect(
+#         host="172.16.28.223",
+#         database="postgres",
+#         user="postgres",
+#         password="ndxpro123!"
+#     )
+#     logging.info("Database connection established")
     
-    #local
-    # engine = create_engine('postgresql+psycopg2://postgres:123123@localhost:5432/postgres')
-    engine = create_engine('postgresql+psycopg2://postgres:ndxpro123!@172.16.28.223:55433/postgres')
+#     #local
+#     # engine = create_engine('postgresql+psycopg2://postgres:123123@localhost:5432/postgres')
+#     engine = create_engine('postgresql+psycopg2://postgres:ndxpro123!@172.16.28.223:55433/postgres')
 
-    schema_name = "datainferencemetricset"
-    # local
-    table_name = "databrokerservice"
-    #table_name = CONTAINER_NAME
+#     schema_name = "datainferencemetricset"
+#     # local
+#     table_name = "databrokerservice"
+#     #table_name = CONTAINER_NAME
 
-    # Convert the DataFrame to a PostgreSQL-compatible format using the 'to_sql' method
-    es_df.to_sql(schema=schema_name,name=table_name,con=engine, if_exists='replace', index=False) # table명 환경변수화 해야함
+#     # Convert the DataFrame to a PostgreSQL-compatible format using the 'to_sql' method
+#     es_df.to_sql(schema=schema_name,name=table_name,con=engine, if_exists='replace', index=False) # table명 환경변수화 해야함
 
     
-    # Rest of your code ...
+#     # Rest of your code ...
     
-except psycopg2.Error as e:
-    logging.error(f"Error connecting to the database: {e}")
+# except psycopg2.Error as e:
+#     logging.error(f"Error connecting to the database: {e}")
 

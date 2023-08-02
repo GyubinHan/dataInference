@@ -69,7 +69,6 @@ print(future.tail())
 
 forecast = prophet_basic.predict(future)
 print(forecast)
-print("hello world")
 
 # # cpu plotting
 # count = 0

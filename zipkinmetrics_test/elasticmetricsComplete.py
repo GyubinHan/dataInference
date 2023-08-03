@@ -60,7 +60,7 @@ query = {
                         },
                         {
                         "match":{
-                            "container.name":"data-broker-ai-1"
+                            "container.name":"data-broker-ai-5"
                             # "container.name": CONTAINER_NAME
                             
                             # "localEndpoint.serviceName":SERVICE_NAME
@@ -93,6 +93,8 @@ es_lst = []
 print("data insert start ")
 start = time.time()
 
+
+count = 0
 try:
     for i in range(fetched):
         container_name = response['hits']['hits'][i]['_source']['container']['name']
@@ -108,6 +110,8 @@ try:
         # new = es_dict(container_name,cpu_usage,res_timestamp)
         es_df.loc[len(es_df)] = list(es_dict(container_name,cpu_usage,res_timestamp).values())
         
+        count += 1
+        print(count)
         
         
         # es_df = es_df.append(es_dict(response['hits']['hits'][i]['_source']["localEndpoint"]["serviceName"],response['hits']['hits'][i]['_source'],response['hits']['hits'][i]['_source'],response['hits']['hits'][i]['_source']))
@@ -131,6 +135,8 @@ try:
             # es_df.loc[len(es_df)] = list(es_dict.values())
             es_df.loc[len(es_df)] = list(es_dict(container_name,cpu_usage,res_timestamp).values())
 
+            count += 1
+            print(count)
             # es_df.append(response['hits']['hits'][i]['_source'])
             
 except exceptions.ElasticsearchException as e:
@@ -180,7 +186,7 @@ print(es_df)
 
 print("saving to csv")
 
-es_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/metricbeat-230719-ai-broker-1.csv",sep=',',na_rep='NaN')
+es_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/metricbeat-230802-ai-broker-5.csv",sep=',',na_rep='NaN')
 
 print("CSV SAVING DONE")
 

@@ -7,21 +7,21 @@ from prophet.plot import plot_plotly
 import plotly.offline as py
 import cmdstanpy
 from sklearn.preprocessing import LabelEncoder
-
-cmdstanpy.install_cmdstan()
-cmdstanpy.install_cmdstan(compiler=True) 
+import time
+# cmdstanpy.install_cmdstan()
+# cmdstanpy.install_cmdstan(compiler=True) 
 encode = LabelEncoder()
 
 # py.init_notebook_mode()
 
 
-metric1 = pd.read_csv("metricbeat-230731-ai-broker-1.csv")
-metric2 = pd.read_csv("metricbeat-230731-ai-broker-2.csv")
-metric3 = pd.read_csv("metricbeat-230731-ai-broker-3.csv")
-metric4 = pd.read_csv("metricbeat-230731-ai-broker-4.csv")
-metric5 = pd.read_csv("metricbeat-230731-ai-broker-5.csv")
+metric1 = pd.read_csv("metricbeat-230802-ai-broker-1.csv")
+metric2 = pd.read_csv("metricbeat-230802-ai-broker-2.csv")
+metric3 = pd.read_csv("metricbeat-230802-ai-broker-3.csv")
+metric4 = pd.read_csv("metricbeat-230802-ai-broker-4.csv")
+metric5 = pd.read_csv("metricbeat-230802-ai-broker-5.csv")
 
-zipkin = pd.read_csv("zipkin-230731-ai-brokerservice.csv")
+zipkin = pd.read_csv("zipkin-230801-all-broker.csv")
 
 
 
@@ -48,29 +48,67 @@ for i in merged["api_name"].unique():
 train_dataset = pd.DataFrame()
 train_dataset['ds'] = pd.to_datetime(merged['timestamp_5seconds'])
 train_dataset['y'] = merged['cpu_usage']
-
+# train_dataset['duration'] = merged['duration']
+train_dataset['ticker'] = merged['api_name']
 print(train_dataset)
 print(type(train_dataset))
 
 
-## plot
+groups_by_ticker = train_dataset.groupby('ticker')
+print(groups_by_ticker.groups.keys())
+print(train_dataset.info())
+
+def train_and_forecast(group):
+  # Initiate the model
+  m = Prophet()
+  
+  # Fit the model
+  m.fit(group)
+  # Make predictions
+  future = m.make_future_dataframe(periods=3)
+  forecast = m.predict(future)[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
+  forecast['ticker'] = group['ticker'].iloc[0]
+  
+  # Return the forecasted results
+  return forecast[['ds', 'ticker', 'yhat', 'yhat_upper', 'yhat_lower']]
+
+
+# Start time
+start_time = time.time()
+# Create an empty dataframe
+for_loop_forecast = pd.DataFrame()
+# Loop through each ticker
+for ticker in api_name_lst:
+  # Get the data for the ticker
+  group = groups_by_ticker.get_group(ticker)  
+  # Make forecast
+  forecast = train_and_forecast(group)
+  # Add the forecast results to the dataframe
+  for_loop_forecast = pd.concat((for_loop_forecast, forecast))
+print('The time used for the for-loop forecast is ', time.time()-start_time)
+# Take a look at the data
+for_loop_forecast.head()
+print(for_loop_forecast)
+
+# plot
 # train_dataset.set_index('ds').plot()
 
 
-
-# prophet modeling
-prophet_basic = Prophet()
-prophet_basic.fit(train_dataset)
-
-
-future = prophet_basic.make_future_dataframe(periods=1)
-print(future.tail())
+# # plt.plot(train_dataset['ds'],train_dataset[''])
+# # plt.show()
+# # prophet modeling
+# prophet_basic = Prophet()
+# prophet_basic.fit(train_dataset)
 
 
-forecast = prophet_basic.predict(future)
-print(forecast)
+# future = prophet_basic.make_future_dataframe(periods=1)
+# print(future.tail())
 
-# # cpu plotting
+
+# forecast = prophet_basic.predict(future)
+# print(forecast)
+
+# # # cpu plotting
 # count = 0
 # X = []
 # Y = []

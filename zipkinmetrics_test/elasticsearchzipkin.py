@@ -60,7 +60,7 @@ def round_seconds(obj: datetime) -> datetime:
 # os.environment
 # SERVICE_NAME = os.environ['SERVICE_NAME']
 # from pandas.io.json import json_normalize
-es = Elasticsearch('http://elastic:ndxpro123!@172.16.28.223:59200')
+es = Elasticsearch('http://elastic:ndxpro123!@172.16.28.222:59200')
 # es = Elasticsearch('http://elastic:ndxpro123!@123.37.5.152:59200')
 
 # print(es)
@@ -123,7 +123,7 @@ zipkin_df = pd.DataFrame(columns=['service_name','api_name', 'zipkin_timestamp',
 print("data insert start ")
 
 # print(response['hits']['hits'])
-
+count = 0
 try:
     for i in range(fetched):
         service_name = response['hits']['hits'][i]['_source']['localEndpoint']['serviceName']
@@ -144,7 +144,8 @@ try:
         duration = "{}.{}".format(duration.second, duration.microsecond)
             
         zipkin_df.loc[len(zipkin_df)] = list(elasticsearch_dict(service_name,api_name,res_timestamp,duration,traceid).values())
-    
+        count += 1
+        print(count)
         
         
         # es_df = es_df.append(es_dict(response['hits']['hits'][i]['_source']["localEndpoint"]["serviceName"],response['hits']['hits'][i]['_source'],response['hits']['hits'][i]['_source'],response['hits']['hits'][i]['_source']))
@@ -177,7 +178,9 @@ try:
             
 
             zipkin_df.loc[len(zipkin_df)] = list(elasticsearch_dict(service_name,api_name,res_timestamp,duration,traceid).values())
-
+            count += 1
+            print(count)
+    
             # es_df.append(response['hits']['hits'][i]['_sour
 
 except exceptions.ElasticsearchException as e:
@@ -226,7 +229,7 @@ print(zipkin_df)
 
 print("saving to csv")
 
-zipkin_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/zipkin-230711-all-broker.csv",sep=',',na_rep='NaN')
+zipkin_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/zipkin-230801-all-broker.csv",sep=',',na_rep='NaN')
 
 print("CSV SAVING DONE")
 

@@ -6,6 +6,7 @@ from prophet import Prophet
 from prophet.plot import plot_plotly
 import plotly.offline as py
 import cmdstanpy
+
 from sklearn.preprocessing import LabelEncoder
 import time
 # cmdstanpy.install_cmdstan()
@@ -48,7 +49,7 @@ for i in merged["api_name"].unique():
 train_dataset = pd.DataFrame()
 train_dataset['ds'] = pd.to_datetime(merged['timestamp_5seconds'])
 train_dataset['y'] = merged['cpu_usage']
-# train_dataset['duration'] = merged['duration']
+train_dataset['duration'] = merged['duration']
 train_dataset['ticker'] = merged['api_name']
 print(train_dataset)
 print(type(train_dataset))
@@ -57,7 +58,11 @@ print(type(train_dataset))
 groups_by_ticker = train_dataset.groupby('ticker')
 print(groups_by_ticker.groups.keys())
 print(train_dataset.info())
-
+model = Prophet()
+# m = Prophet()
+# m.add_regressor('duration')
+# m.fit(train_dataset)
+###### Prophet model
 def train_and_forecast(group):
   # Initiate the model
   m = Prophet()
@@ -65,31 +70,39 @@ def train_and_forecast(group):
   # Fit the model
   m.fit(group)
   # Make predictions
-  future = m.make_future_dataframe(periods=3)
+  future = m.make_future_dataframe(periods=30)
   forecast = m.predict(future)[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
   forecast['ticker'] = group['ticker'].iloc[0]
   
   # Return the forecasted results
   return forecast[['ds', 'ticker', 'yhat', 'yhat_upper', 'yhat_lower']]
 
+print(merged)
+print(merged.info())
+# # Start time
+# start_time = time.time()
+# # Create an empty dataframe
+# for_loop_forecast = pd.DataFrame()
+# # Loop through each ticker
+# for ticker in api_name_lst:
+#   # Get the data for the ticker
+#   group = groups_by_ticker.get_group(ticker)  
+#   # Make forecast
+#   forecast = train_and_forecast(group)
+#   # Add the forecast results to the dataframe
+#   for_loop_forecast = pd.concat((for_loop_forecast, forecast))
+# print('The time used for the for-loop forecast is ', time.time()-start_time)
+# # Take a look at the data
+# # for_loop_forecast.head()
+# print(for_loop_forecast)
 
-# Start time
-start_time = time.time()
-# Create an empty dataframe
-for_loop_forecast = pd.DataFrame()
-# Loop through each ticker
-for ticker in api_name_lst:
-  # Get the data for the ticker
-  group = groups_by_ticker.get_group(ticker)  
-  # Make forecast
-  forecast = train_and_forecast(group)
-  # Add the forecast results to the dataframe
-  for_loop_forecast = pd.concat((for_loop_forecast, forecast))
-print('The time used for the for-loop forecast is ', time.time()-start_time)
-# Take a look at the data
-for_loop_forecast.head()
-print(for_loop_forecast)
 
+# print("saving csv for forecast")
+# for_loop_forecast.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/23-08-03")
+# print("Done")
+# plt.plot(for_loop_forecast['ds'],for_loop_forecast['yhat'])
+# # plt.plot(for_loop_forecast['ds'],for_loop_forecast['yhat'])
+# plt.show()
 # plot
 # train_dataset.set_index('ds').plot()
 

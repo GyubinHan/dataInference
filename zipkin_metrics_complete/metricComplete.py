@@ -60,7 +60,7 @@ query = {
                         },
                         {
                         "match":{
-                            "container.name":"data-broker-ai-5"
+                            "container.name":"data-broker-ai-1"
                             # "container.name": CONTAINER_NAME
                             
                             # "localEndpoint.serviceName":SERVICE_NAME
@@ -199,7 +199,7 @@ print(es_df)
 
 print("saving to csv")
 
-es_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/metricbeat-230731-ai-broker-5.csv",sep=',',na_rep='NaN')
+es_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/metricbeat-230811-ai-broker-1.csv",sep=',',na_rep='NaN')
 
 print("CSV SAVING DONE")
 

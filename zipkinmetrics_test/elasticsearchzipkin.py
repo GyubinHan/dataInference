@@ -229,7 +229,7 @@ print(zipkin_df)
 
 print("saving to csv")
 
-zipkin_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/zipkin-230801-all-broker.csv",sep=',',na_rep='NaN')
+zipkin_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/zipkin-230818-all-broker.csv",sep=',',na_rep='NaN')
 
 print("CSV SAVING DONE")
 

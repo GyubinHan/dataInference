@@ -16,7 +16,7 @@ from tensorflow.keras.layers import LSTM, Dense
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.optimizers import Adam
-from keras.preprocessing import LabelEncoder
+# from keras.preprocessing import LabelEncoder
 
 
 ## 데이터 로드
@@ -77,11 +77,13 @@ merged_final = pd.merge(merged,merged_grouped,on='traceId')
 
 merged_final = merged_final.drop_duplicates(['traceId'],keep='first')
 merged_final = merged_final.sort_values(by=['traceId'],axis=0,ascending=True)
-merged_final.drop(['cpu_usage_x'],inplace=True, axis=1)
-merged_final.drop(['cpu_usage_y'],inplace=True, axis=1)
+# merged_final.drop(['cpu_usage_x'],inplace=True, axis=1)
+merged_final.drop(['cpu_usage_y'],inplace=True, axis=1) 
 
+merged_final.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/merged-230901-all-broker.csv",sep=',',na_rep='NaN')
+print("DONE")
 # print(merged_final)
-merged_final['zipkin_timestamp'] = pd.to_datetime(merged_final['zipkin_timestamp']).dt.tz_localize(None)
+# merged_final['zipkin_timestamp'] = pd.to_datetime(merged_final['zipkin_timestamp']).dt.tz_localize(None)
 
 # print(merged_final['zipkin_timestamp'][0])
 # print(merged_final['zipkin_timestamp'][1])

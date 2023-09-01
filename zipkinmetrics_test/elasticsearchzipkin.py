@@ -109,9 +109,9 @@ query = {
 
 
 response = es.search(index = index,
-                   scroll = _KEEP_ALIVE_LIMIT,
-                   size = 100,
-                   body = query)
+                scroll = _KEEP_ALIVE_LIMIT,
+                size = 100,
+                body = query)
 
 elastic_lst = []
 # elastic search data ingesting
@@ -138,7 +138,7 @@ try:
         date_timemilli = parser.parse(timestamp_millis)
         res_time = date_timemilli + timedelta(hours=9)
         res_timestamp = round_seconds(res_time).strftime("%Y-%m-%dT%H:%M:%S")
-       
+    
         # duration seconds 추출
         duration = datetime.fromtimestamp(duration/1000)
         duration = "{}.{}".format(duration.second, duration.microsecond)
@@ -229,7 +229,7 @@ print(zipkin_df)
 
 print("saving to csv")
 
-zipkin_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/zipkin-230818-all-broker.csv",sep=',',na_rep='NaN')
+zipkin_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/zipkin-230901-all-broker.csv",sep=',',na_rep='NaN')
 
 print("CSV SAVING DONE")
 
@@ -279,3 +279,9 @@ print("CSV SAVING DONE")
 # zipkin_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/zipkin223-data-broker-1-2023-06-28.csv",sep=',',na_rep='NaN')
 
 # print("CSV SAVING DONE")
+
+
+
+
+
+########## 1번부터 5번까지 자동으로 saving

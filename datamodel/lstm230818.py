@@ -40,7 +40,7 @@ metric15 = pd.read_csv("metricbeat-230818-ai-broker-5.csv")
 
 zipkin1 = pd.read_csv("zipkin-230801-all-broker.csv")
 zipkin2 = pd.read_csv("zipkin-230811-all-broker.csv")
-zipkin2 = pd.read_csv("zipkin-230818-all-broker.csv")
+zipkin3 = pd.read_csv("zipkin-230818-all-broker.csv")
 
 
 
@@ -51,8 +51,8 @@ zipkin2 = pd.read_csv("zipkin-230818-all-broker.csv")
 
 metric_lst = [metric1,metric2,metric3,metric4,metric5,metric6,metric7,metric8,metric9,metric10,metric11,metric12,metric13,metric14,metric15]
 # metric_merge = pd.merge(metric1,metric2, on='container_name')
-metric_merge = pd.concat([metric1,metric2,metric3,metric4,metric5,metric6,metric7,metric8,metric9,metric10])
-zipkin_merge = pd.concat([zipkin1,zipkin2,zipkin2])
+metric_merge = pd.concat([metric1,metric2,metric3,metric4,metric5,metric6,metric7,metric8,metric9,metric10,metric11,metric12,metric13,metric14,metric15])
+zipkin_merge = pd.concat([zipkin1,zipkin2,zipkin2,zipkin3])
 
 metric_merge.drop(['Unnamed: 0'], axis = 1, inplace = True)
 metric_merge.drop(['new_index'], axis = 1, inplace = True)
@@ -62,11 +62,19 @@ zipkin_merge.drop_duplicates(['traceId'],keep='first')
 
 ##### data merge
 merged = pd.merge(metric_merge, zipkin_merge,left_on='timestamp_5seconds', right_on='timestamp_5seconds',how='right')
+# print(merged)
 # print(merged_inner)
 
 # print(merged_inner['cpu_usage'].mean())
 
 
+
+
+
+
+
+merged = merged.dropna()
+# print(merged)
 
 ###### 
 merged_grouped = merged.groupby(merged['traceId'])
@@ -78,23 +86,35 @@ merged_grouped = merged_grouped.reset_index()
 merged_grouped['cpu_mean'] = merged_grouped['cpu_usage']
 
 merged_final = pd.merge(merged,merged_grouped,on='traceId')
+# print(merged_final)
 print(merged_final)
+print(merged_final.drop_duplicates(['traceId'],keep='first'))
+merged_final_pivot = pd.pivot_table(merged_final, values='cpu_usage_x', index=['zipkin_timestamp'], columns=['api_name'])
+
+# print(merged_final_pivot)
 merged_final = merged_final.drop_duplicates(['traceId'],keep='first')
 merged_final = merged_final.sort_values(by=['traceId'],axis=0,ascending=True)
 # merged_final.drop(['cpu_usage_x'],inplace=True, axis=1)
 merged_final.drop(['cpu_usage_y'],inplace=True, axis=1)
 
 merged_final = merged_final.dropna()
-print(merged_final.sort_values(by=['zipkin_timestamp']))
 
-merged_final_pivot = pd.pivot_table(merged_final, values='cpu_mean', 
- index=['zipkin_timestamp'], columns=['api_name'])
+# print(merged_final)
+# print(merged_final.sort_values(by=['zipkin_timestamp']))
+
+# merged_final_pivot = pd.pivot_table(merged_final, values='cpu_usage_x', index=['zipkin_timestamp'], columns=['api_name'])
+
+# print(merged_final_pivot)
 
 
-
-
-for i in range(0, len(merged_final_pivot.columns)):
-    merged_final_pivot.iloc[:,i].interpolate(inplace = True)
+# for i in range(0, len(merged_final_pivot.columns)):
+#     merged_final_pivot.iloc[:,i].interpolate(inplace = True)
+ 
+ 
+ 
+ 
+ 
+ 
  
  
 # import plotly

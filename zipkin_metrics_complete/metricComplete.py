@@ -32,6 +32,9 @@ def es_dict(container_name,cpu_usage,timestamp):
     return new_dict
 
 
+
+    
+    
 _KEEP_ALIVE_LIMIT='20s'
 
 
@@ -40,6 +43,12 @@ logging.basicConfig(filename='data_insert.log', level=logging.INFO, format='%(as
 # os environment
 
 es = Elasticsearch('http://elastic:ndxpro123!@172.16.28.222:59200')
+
+
+
+
+
+
 # index = "metricbeat-7.17.0-2023.06.19-000001"
 index = "metric*"
 # now = datetime.now()
@@ -60,7 +69,7 @@ query = {
                         },
                         {
                         "match":{
-                            "container.name":"data-broker-ai-1"
+                            "container.name":"data-broker-ai-4"
                             # "container.name": CONTAINER_NAME
                             
                             # "localEndpoint.serviceName":SERVICE_NAME
@@ -199,10 +208,33 @@ print(es_df)
 
 print("saving to csv")
 
-es_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/metricbeat-230811-ai-broker-1.csv",sep=',',na_rep='NaN')
+es_df.to_csv("/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/metricbeat-230901-ai-broker-4.csv",sep=',',na_rep='NaN')
 
 print("CSV SAVING DONE")
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+############################## dbeaver connect
 # conn = psycopg2.connect(
 #     host="172.16.28.223", 
 #     database="postgres",

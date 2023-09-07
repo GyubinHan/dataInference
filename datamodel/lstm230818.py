@@ -76,7 +76,6 @@ merged = pd.merge(metric_merge, zipkin_merge,left_on='timestamp_5seconds', right
 merged = merged.dropna()
 # print(merged)
 
-###### 
 merged_grouped = merged.groupby(merged['traceId'])
 merged_grouped = merged_grouped['cpu_usage'].mean()
 

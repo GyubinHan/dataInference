@@ -17,6 +17,8 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.callbacks import EarlyStopping
 
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+
 
 
 # Set seeds to make the experiment more reproducible.
@@ -31,27 +33,16 @@ seed = 28
 seed_everything()
 
 ## 데이터 로드
-metric1 = pd.read_csv("metricbeat-230802-ai-broker-1.csv")
-metric2 = pd.read_csv("metricbeat-230802-ai-broker-2.csv")
-metric3 = pd.read_csv("metricbeat-230802-ai-broker-3.csv")
-metric4 = pd.read_csv("metricbeat-230802-ai-broker-4.csv")
-metric5 = pd.read_csv("metricbeat-230802-ai-broker-5.csv")
-metric6 = pd.read_csv("metricbeat-230811-ai-broker-1.csv")
-metric7 = pd.read_csv("metricbeat-230811-ai-broker-2.csv")
-metric8 = pd.read_csv("metricbeat-230811-ai-broker-3.csv")
-metric9 = pd.read_csv("metricbeat-230811-ai-broker-4.csv")
-metric10 = pd.read_csv("metricbeat-230811-ai-broker-5.csv")
-metric11 = pd.read_csv("metricbeat-230818-ai-broker-1.csv")
-metric12 = pd.read_csv("metricbeat-230818-ai-broker-2.csv")
-metric13 = pd.read_csv("metricbeat-230818-ai-broker-3.csv")
-metric14 = pd.read_csv("metricbeat-230818-ai-broker-4.csv")
-metric15 = pd.read_csv("metricbeat-230818-ai-broker-5.csv")
+metric1 = pd.read_csv("metricbeat-230911-ai-broker-1.csv")
+metric2 = pd.read_csv("metricbeat-230911-ai-broker-2.csv")
+metric3 = pd.read_csv("metricbeat-230911-ai-broker-3.csv")
+metric4 = pd.read_csv("metricbeat-230911-ai-broker-4.csv")
+metric5 = pd.read_csv("metricbeat-230911-ai-broker-5.csv")
 
 
 
-zipkin1 = pd.read_csv("zipkin-230801-all-broker.csv")
-zipkin2 = pd.read_csv("zipkin-230811-all-broker.csv")
-zipkin3 = pd.read_csv("zipkin-230818-all-broker.csv")
+
+zipkin1 = pd.read_csv("zipkin-230911-all-broker.csv")
 
 
 
@@ -60,10 +51,10 @@ zipkin3 = pd.read_csv("zipkin-230818-all-broker.csv")
 # print(metric1.head())
 # print(zipkin.head())
 
-metric_lst = [metric1,metric2,metric3,metric4,metric5,metric6,metric7,metric8,metric9,metric10,metric11,metric12,metric13,metric14,metric15]
+metric_lst = [metric1,metric2,metric3,metric4,metric5]
 # metric_merge = pd.merge(metric1,metric2, on='container_name')
-metric_merge = pd.concat([metric1,metric2,metric3,metric4,metric5,metric6,metric7,metric8,metric9,metric10,metric11,metric12,metric13,metric14,metric15])
-zipkin_merge = pd.concat([zipkin1,zipkin2,zipkin2,zipkin3])
+metric_merge = pd.concat([metric1,metric2,metric3,metric4,metric5])
+zipkin_merge = pd.concat([zipkin1])
 
 metric_merge.drop(['Unnamed: 0'], axis = 1, inplace = True)
 metric_merge.drop(['new_index'], axis = 1, inplace = True)
@@ -88,28 +79,81 @@ merged_final = merged_final.drop_duplicates(['traceId'],keep='first')
 
 merged_final['metricset_timestamp'] = pd.to_datetime(merged_final['metricset_timestamp'])
 merged_final['metricset_timestamp'].min(), merged_final['metricset_timestamp'].max()
-
-train, test = merged_final.loc[merged_final['metricset_timestamp'] <= '2023-08-05'], merged_final.loc[merged_final['metricset_timestamp'] > '2023-08-07']
-print(train.shape, test.shape)
+test = merged_final.loc[merged_final['metricset_timestamp'] > '2023-08-20']
 
 
-new_model = tf.keras.models.load_model('/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/lstmautoencodermodel/model_checkpoint_99.h5')
-plt.plot(history.history['loss'], label='Training loss')
-plt.plot(history.history['val_loss'], label='Validation loss')
-plt.legend();
+
+print(test)
+# TIME_STEPS = 30
+# def create_sequences(X, y, time_steps=TIME_STEPS):
+#     Xs, ys = [], []
+#     for i in range(len(X)-time_steps):
+#         Xs.append(X.iloc[i:(i+time_steps)].values)
+#         ys.append(y.iloc[i+time_steps])
+    
+#     return np.array(Xs), np.array(ys)
+# scaler = StandardScaler()
+# scaler = scaler.fit(test[['cpu_mean']])
+
+# # train['cpu_mean'] = scaler.transform(train[['cpu_mean']])
+# test['cpu_mean'] = scaler.transform(test[['cpu_mean']])
+# # X_train, y_train = create_sequences(train[['cpu_mean']], train['cpu_mean'])
+# X_test, y_test = create_sequences(test[['cpu_mean']], test['cpu_mean'])
+
+# # print(f'Training shape: {X_train.shape}')
+# print(f'Testing shape: {X_test.shape}')# train, test = merged_final.loc[merged_final['metricset_timestamp'] <= '2023-08-05'], merged_final.loc[merged_final['metricset_timestamp'] > '2023-08-07']
+# # print(train.shape, test.shape)
 
 
-X_train_pred = model.predict(X_train, verbose=0)
-train_mae_loss = np.mean(np.abs(X_train_pred - X_train), axis=1)
-threshold = np.max(train_mae_loss)
+# new_model = tf.keras.models.load_model('/Users/e8l-20210032/Documents/GyubinHanAI/dataInference/lstmautoencodermodel/model_checkpoint_99.h5')
+# # plt.plot(history.history['loss'], label='Training loss')
+# # plt.plot(history.history['val_loss'], label='Validation loss')
+# # plt.legend();
 
-print(f'Reconstruction error threshold: {threshold}')
 
-test_score_df = pd.DataFrame(test[TIME_STEPS:])
-test_score_df['loss'] = test_mae_loss
-test_score_df['threshold'] = threshold
-test_score_df['anomaly'] = test_score_df['loss'] > test_score_df['threshold']
-test_score_df['cpu_mean'] = test[TIME_STEPS:]['cpu_mean']
+
+
+
+
+
+
+
+
+
+# X_test_pred = new_model.predict(X_test, verbose =0)
+
+# train_mae_loss = np.mean(np.abs(X_test_pred - y_test), axis=1)
+
+# X_test_pred = new_model.predict(y_test, verbose=0)
+# print(X_test_pred)
+# test_mae_loss = np.mean(np.abs(X_test_pred-y_test), axis=1)
+# test_threshold = np.max(test_mae_loss) - 1.5
+
+# print(f'Reconstruction error threshold: {test_threshold}')
+# print("y_test")
+# print(y_test)
+# test_score_df = pd.DataFrame(y_test[TIME_STEPS:])
+# print("test_score_df")
+# print(test_score_df)
+# test_score_df['loss'] = test_mae_loss
+# test_score_df['threshold'] = test_threshold
+# test_score_df['anomaly'] = test_score_df['loss'] > test_score_df['threshold']
+# test_score_df['cpu_mean'] = y_test[TIME_STEPS:]['cpu_mean']
+
+
+# test_mae_loss = np.mean(np.abs(X_test_pred-test), axis=1)
+
+
+# # fig = go.Figure()
+# # fig.add_trace(go.Scatter(x=test_score_df['metricset_timestamp'], y=test_score_df['loss'], name='Test loss'))
+# # fig.add_trace(go.Scatter(x=test_score_df['metricset_timestamp'], y=test_score_df['threshold'], name='Threshold'))
+# # fig.update_layout(showlegend=True, title='Test loss vs. Threshold')
+# # fig.show()
+
+
+# anomalies = test_score_df.loc[test_score_df['anomaly'] == True]
+# print(anomalies.shape)
+# print(anomalies)
 
 
 
@@ -118,7 +162,3 @@ test_score_df['cpu_mean'] = test[TIME_STEPS:]['cpu_mean']
 # fig.add_trace(go.Scatter(x=test_score_df['metricset_timestamp'], y=test_score_df['threshold'], name='Threshold'))
 # fig.update_layout(showlegend=True, title='Test loss vs. Threshold')
 # fig.show()
-
-
-anomalies = test_score_df.loc[test_score_df['anomaly'] == True]
-anomalies.shape
